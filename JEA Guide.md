@@ -1,17 +1,26 @@
-# Just Enough Administration (JEA) Infrastructure: An Introduction
-By John Slack (port to Markdown by Steve Lee)
-Version 0.4
+# Just Enough Administration (JEA) Infrastructure: An Introduction v0.4
+By John Slack 
+(port to Markdown by Steve Lee)
 
 ## Table of Contents
 After reading this document, you should be able to author, deploy, use, maintain, and audit a Just Enough Administration (JEA) deployment on Windows Server 2016 PP1.  Here are the topics we will cover:  
-1.	[Introduction](## Introduction): Briefly review why you should care about JEA. 
+
+1.	[Introduction](## Introduction): Briefly review why you should care about JEA
+
 2.	[Prerequisites](## Prerequisites): Set up your environment
-3.	[Using JEA](## Using JEA): Start by understanding the operator experience of using JEA.
-4.	[Remake the Demo](## Remake the Demo Endpoint): Create a JEA Session Configuration from scratch.
-5.	[Role Capabilities](## Role Capabilities): Learn about how to customize JEA capabilities with Role Capability Files.
+
+3.	[Using JEA](## Using JEA): Start by understanding the operator experience of using JEA
+
+4.	[Remake the Demo](## Remake the Demo Endpoint): Create a JEA Session Configuration from scratch
+
+5.	[Role Capabilities](## Role Capabilities): Learn about how to customize JEA capabilities with Role Capability Files
+
 6.	[End to End - Active Directory](## End to End - Active Directory): Make a whole new endpoint for managing Active Directory
+
 7.	[Multi-machine Deployment and Maintenance](## Multi-machine Deployment and Maintenance): Discover how deployment and authoring changes with scale
-8.	[Reporting on JEA](## Reporting on JEA): Discover how to audit and report on all JEA actions and infrastructure.
+
+8.	[Reporting on JEA](## Reporting on JEA): Discover how to audit and report on all JEA actions and infrastructure
+
 9.	[Appendix](## Appendix): Important skills and discussion points
 
 ## Introduction
@@ -30,10 +39,15 @@ The initial release of JEA, called xJEA, consisted of experimental DSC resources
 
 ### Initial State
 Before starting this section, please ensure the following:
+
 1.	You have either:
+
 	a.	An instance of Windows Server 2016 TP4 instance running 
+
 	b.	An instance of Windows Server 2012 or 2012R2 with WMF 5.0 RTM
+
 2.	You have administrative rights on the server
+
 3.	The server is domain joined.  See the [Creating a Domain Controller](### Creating a Domain Controller) section for instructions on creating a standalone domain.
 
 ### Enable PowerShell Remoting
@@ -121,13 +135,19 @@ Restart-Service WinRM
 ### [Optional] Enable PowerShell Module Logging
 This enables logging for all PowerShell actions on your system.  You don’t need to enable this for JEA to work, but it will be useful in the [Reporting on JEA](## Reporting on JEA) section.
 
-STEP 1: Open the local group policy editor. 
+STEP 1: Open the local group policy editor
+
 STEP 2: Navigate to "Computer Configuration\Administrative Templates\Windows Components\Windows PowerShell"
+
 STEP 3: Double Click on "Turn on Module Logging"
+
 STEP 4: Click "Enabled"
+
 STEP 5: In the Options section, click on "Show" next to Module Names
-STEP 6: Type "*" in the pop up window.  This means PowerShell will log commands from all modules.
-STEP 7: Click OK and apply the policy.
+
+STEP 6: Type "*" in the pop up window.  This means PowerShell will log commands from all modules
+
+STEP 7: Click OK and apply the policy
 
 Note: you can also enable system-wide PowerShell transcription through Group Policy.
 
@@ -271,7 +291,7 @@ RunAsVirtualAccount = $true
 
 # New value
 RunAsVirtualAccount = $true
-RoleDefinitions = @{ 'CONTOSO\SqlAdmins' = @{ RoleCapabilities = 'SqlAdministration' }; 'CONTOSO\ServerMonitors' = @{ VisibleCmdlets = 'Get-Process' } }|RoleDefinitions = @{'Contoso\JEA_NonAdmin_Operator' = @{ RoleCapabilities =  'Maintenance' }}|
+RoleDefinitions = @{ 'CONTOSO\SqlAdmins' = @{ RoleCapabilities = 'SqlAdministration' }; 'CONTOSO\ServerMonitors' = @{ VisibleCmdlets = 'Get-Process' } }|RoleDefinitions = @{'Contoso\JEA_NonAdmin_Operator' = @{ RoleCapabilities =  'Maintenance' }}
 ```
 
 Here is what each of those entries mean:
@@ -287,9 +307,13 @@ Here is what each of those entries mean:
 STEP 4: Save JEADemo2.pssc
 
 ### Apply the PowerShell Session Configuration 
+
 To create a Session Configuration from a Session Configuration file, you need to register the file.  This requires a few pieces of information:
+
 1.	The path to the Session Configuration File.
+
 2.	The name of your registered Session Configuration.  This is the argument users provide to the "ConfigurationName" parameter when they connect to your endpoint.
+
 3.	[Optional] A custom SDDL that defines access conditions for this Session Configuration.  This is only required for scenarios like two factor authentication.  Otherwise, PowerShell uses the "RoleDefinitions" field to determine access.  See [this section](### On SDDL Generation and Maintenance) in the appendix for more information. 
 
 To register the Session Configuration on your local machine, run the following command:
@@ -356,8 +380,11 @@ VisibleExternalCommands = 'C:\Windows\system32\ipconfig.exe’
 ```
 
 This contains a few interesting examples:
-1.	 You have restricted Restart-Service.  Operators will only be able to use Restart-Service with the -Name parameter, and they will only be allowed to provide "Spooler" as an argument to that parameter.  If you wanted to, you could also restrict the arguments using a regular expression using a "ValidatePattern". 
+
+1.	You have restricted Restart-Service.  Operators will only be able to use Restart-Service with the -Name parameter, and they will only be allowed to provide "Spooler" as an argument to that parameter.  If you wanted to, you could also restrict the arguments using a regular expression using a "ValidatePattern". 
+
 2.	You have exposed all commands with the "Get" verb from the NetTCPIP module.  Because "Get" commands typically don’t change system state, this is a relatively safe action.  That being said, we strongly encourage examining every command you expose through JEA.
+
 3.	You have expose an executable (ipconfig) using VisibleExternalCommands.  You can also expose scripts with this field.
 
 STEP 3: Save the file.
@@ -447,11 +474,17 @@ You need to expose a completely new set of commands to a different group of peop
 To follow this section step-by-step, you’ll need to be operating on a domain controller.  If you don’t have access to your domain controller, don’t worry.  Try to follow along with by working against some other scenario or role with which you are familiar.  
 
 ### Steps to Making a New Role Capability and Session Configuration
+
 Making a new role capability can seem daunting at first, but it’s can be broken into fairly simple steps:
+
 1.	Identify the tasks you need to enable
+
 2.	Restrict those tasks as necessary
+
 3.	Confirm they work with JEA
+
 4.	Put them in a Role Capability File
+
 5.	Register a Session Configuration that exposes that Role Capability
 
 ### Step 1: Identify What Needs to Be Exposed
@@ -467,7 +500,7 @@ Here is a set of online resources that might have come up in your research on cr
 Here is a set of ten actions that you will be working from in the remainder of this section.  Keep in mind this is simply an example, your organizations requirements may be different:
 
 |Action                                                         |PowerShell Command                                         |
------------------------------------------------------------------------------------------------------------------------------
+|---------------------------------------------------------------|-----------------------------------------------------------|
 |Account Unlock                                                 |Unlock-ADAccount                                           |
 |Password Reset                                                 |Set-ADAccountPassword and Set-ADUser -ChangePasswordAtLogon|
 |Change a User’s Title                                          |Set-ADUser -Title                                          |  
@@ -478,12 +511,17 @@ Here is a set of ten actions that you will be working from in the remainder of t
 |Disable a user account                                         |Disable-ADAccount                                          |
 
 ### Step 2: Restrict Tasks as Necessary
+
 Now that you have your list of actions, you need to think through the capabilities of each command.  There are two important reasons to do this:
+
 1.	It is easy to expose give users more capabilities than you intend.  For example, Set-ADUser is an incredibly powerful and flexible command.  You may not want to expose everything it can do to help desk users.  
+
 2.	Even worse, it’s possible to expose commands that allow users to escape JEA’s restrictions.  If this happens, JEA ceases to function as a security boundary.  Please be careful when selecting commands.  For example, Invoke-Expression will allow users to run unrestricted code.  For more discussion on this topic, check out the Considerations When Restricting Commands section.
 
 After reviewing each command, you decide to restrict the following:
+
 1.	Set-ADUser should only be allowed to run with the "-Title" parameter 
+
 2.	Add-ADGroupMember and Remove-ADGroupMember should only work with certain groups
 
 ### Step 3: Confirm the Tasks Work with JEA
@@ -497,8 +535,8 @@ Set-ADAccountPassword -Identity mollyd -NewPassword $newPassword -Reset
 ```
 
 However, No Language mode prevents the usage of variables.  You can get around this restriction in two ways:
-1.	You can require users run the command without assigning variables.  This is easy to configure, but can be painful for the operators using the endpoint.  Who wants to type this out every time you reset a password?
 
+1.	You can require users run the command without assigning variables.  This is easy to configure, but can be painful for the operators using the endpoint.  Who wants to type this out every time you reset a password?
 ```PowerShell
 Set-ADAccountPassword -Identity mollyd -NewPassword (Read-Host -Prompt "Provide New Password" -AsSecureString) -Reset
 ```
@@ -507,14 +545,20 @@ Set-ADAccountPassword -Identity mollyd -NewPassword (Read-Host -Prompt "Provide 
 
 #### Aside: Adding a Function to Your Module
 Taking approach #2, you are going to write a PowerShell function called Reset-ContosoUserPassword.  This function is going to do everything that needs to happen when you reset a user’s password.  In your organization, this may involve doing fancy and complicated things.  Because this is just an example, your command will just reset the password and require the user change the password at logon.  We will put it in the Contoso_AD_Module module you made in the last section.  
+
 STEP 1: In PowerShell ISE, open "Contoso_AD_Module.psm1"
 ```PowerShell
 ISE 'C:\Program Files\WindowsPowerShell\Modules\Contoso_AD_Module\Contoso_AD_Module.psm1' 
 ```
+
 STEP 2: Press Crtl+J to open the snippets menu.
+
 STEP 3: Key down until you find "function" and press enter.  This puts up a super basic skeleton of a function.
+
 STEP 4: Rename the function "Reset-ContosoUserPassword".  
+
 STEP 5: Rename one of the parameters "Identity" and delete the second.
+
 STEP 6: Copy the following into the body of the function.
 ```PowerShell
 # Get the new password
@@ -524,6 +568,7 @@ Set-ADAccountPassword -Identity $Identity -NewPassword $NewPassword -Reset
 # Require the user to reset at next logon
 Set-ADUser -Identity $Identity -ChangePasswordAtLogon
 ```
+
 STEP 7: Save the file.  You should end up with something that looks like this:
 ```PowerShell
 function Reset-ContosoUserPassword ($Identity)
@@ -536,6 +581,7 @@ Set-ADAccountPassword -Identity $Identity -NewPassword $NewPassword -Reset
 Set-ADUser -Identity $Identity -ChangePasswordAtLogon
 } 
 ```
+
 Congratulations, you now have a bare bones function that gets the job done!
 
 ### Step 4: Edit the Role Capability File
@@ -761,11 +807,16 @@ After completing this guide, you should have the tools and vocabulary to create 
 This document assumes that your machine is domain joined.  If you currently don’t
 In the Making a Toolkit section, you will explore creating an Active Directory toolkit as an example.  In the first few sections, you will grant unprivileged users capabilities based on AD group membership.  Both of these require your machine a domain controller.  The rest of this document assumes that your machine is the domain controller of a "Contoso" domain.
 There are many ways to set up a domain.  For example, you could use Server Manager.  Below are some instructions on how to do it with PowerShell Desired State Configuration (DSC). 
-Prerequisites
+
+#### Prerequisites
+
 1.	The machine is on an internal network
+
 2.	The machine is not joined to an existing domain
+
 3.	The machine has the "xActiveDirectory" module [installed](### How to Install xActiveDirectory)
-DSC Instructions
+
+#### DSC Instructions
 
 Copy the following script in PowerShell to make your machine a Domain Controller in a new domain.
 **AUTHORS NOTE: THERE IS A KNOWN ISSUE WITH THE CREDENTIALS PROVIDED NOT BEING USED.  TO BE SAFE, DON’T FORGET YOUR LOCAL ADMIN PASSWORD.**
@@ -880,16 +931,24 @@ After playing around with JEA, many customers ask about blacklisting commands.  
 3.	Furthermore, even if JEA blocked all commands with code-injection vulnerabilities, there is no guarantee that a malicious user would not be able to carry out a blacklisted action with another related command.  Unless you understand all of the commands that you are exposing – it is impossible for you to guarantee that a certain action is not possible.
 The burden is on you to understand what commands you are exposing, whether they are using a whitelist or a blacklist.  The number of commands a blacklist would expose is unmanageable, so JEA does not allow blacklists.
 
-### On SDDL Generation and Maintenance 
+### On SDDL Generation and Maintenance
 By default, PowerShell will only allow to users or groups access to an endpoint if they are listed in "RoleDefinitions" in the session configuration file.  It does this by auto-generating a SDDL that defines access to the endpoint. This works well, until you consider situations like Multi-Factor Authentication.  In those situations, you might want to put additional conditions on those users and groups.  For example, they might need to be a member of a security group representing smart card verification.  
 For these advanced scenarios, you can still use JEA.  You’ll just need to create the SDDL yourself.  To do this use the "-ShowSecurityDescriptorUI" parameter of Register-PSSessionConfiguration.  Then follow these steps:
+
 1.	Click on the "Advanced" button
-2.	Remove the two default groups.
-3.	Click the "Add" button.
-4.	Click "Select a Principle" and choose the user or group you want to give access.
-5.	Click "Add a Condition" with whatever condition you wish to add.
-6.	Click Okay.
+
+2.	Remove the two default groups
+
+3.	Click the "Add" button
+
+4.	Click "Select a Principle" and choose the user or group you want to give access
+
+5.	Click "Add a Condition" with whatever condition you wish to add
+
+6.	Click Okay
+
 7.	Repeat steps 3-6 for each user/group that needs access to the endpoint
+
 The registered endpoint will have a customized SDDL that restricts access in a conditional way.  To actually see that SDDL, just run:
 ```PowerShell
 (Get-PSSessionConfiguration -Name ConfigurationName).SecurityDescriptorSddl 
