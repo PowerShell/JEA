@@ -1,18 +1,18 @@
 # Just Enough Administration (JEA) Infrastructure: An Introduction
-## By John Slack 
-## Version 0.4
+By John Slack (port to Markdown by Steve Lee)
+Version 0.4
 
 ## Table of Contents
-## After reading this document, you should be able to author, deploy, use, maintain, and audit a Just Enough Administration (JEA) deployment on Windows Server 2016 PP1.  Here are the topics we will cover:  
-1.	**Introduction**: Briefly review why you should care about JEA. 
-2.	**Prerequisites**: Set up your environment
-3.	**Using JEA**: Start by understanding the operator experience of using JEA.
-4.	**Remake the Demo**: Create a JEA Session Configuration from scratch.
-5.	**Role Capabilities**: Learn about how to customize JEA capabilities with Role Capability Files.
-6.	**End to End - Active Directory**: Make a whole new endpoint for managing Active Directory
-7.	**Multi-machine**: Discover how deployment and authoring changes with scale
-8.	**Reporting on JEA**: Discover how to audit and report on all JEA actions and infrastructure.
-9.	**Appendix**: Important skills and discussion points
+After reading this document, you should be able to author, deploy, use, maintain, and audit a Just Enough Administration (JEA) deployment on Windows Server 2016 PP1.  Here are the topics we will cover:  
+1.	[Introduction](## Introduction): Briefly review why you should care about JEA. 
+2.	[Prerequisites](## Prerequisites): Set up your environment
+3.	[Using JEA](## Using JEA): Start by understanding the operator experience of using JEA.
+4.	[Remake the Demo](## Remake the Demo Endpoint): Create a JEA Session Configuration from scratch.
+5.	[Role Capabilities](## Role Capabilities): Learn about how to customize JEA capabilities with Role Capability Files.
+6.	[End to End - Active Directory](## End to End - Active Directory): Make a whole new endpoint for managing Active Directory
+7.	[Multi-machine Deployment and Maintenance](## Multi-machine Deployment and Maintenance): Discover how deployment and authoring changes with scale
+8.	[Reporting on JEA](## Reporting on JEA): Discover how to audit and report on all JEA actions and infrastructure.
+9.	[Appendix](## Appendix): Important skills and discussion points
 
 ## Introduction
 
@@ -119,7 +119,7 @@ Restart-Service WinRM
 ```
  
 ### [Optional] Enable PowerShell Module Logging
-This enables logging for all PowerShell actions on your system.  You don’t need to enable this for JEA to work, but it will be useful in the [Reporting on JEA](### Reporting on JEA) section.
+This enables logging for all PowerShell actions on your system.  You don’t need to enable this for JEA to work, but it will be useful in the [Reporting on JEA](## Reporting on JEA) section.
 
 STEP 1: Open the local group policy editor. 
 STEP 2: Navigate to "Computer Configuration\Administrative Templates\Windows Components\Windows PowerShell"
@@ -301,7 +301,7 @@ Register-PSSessionConfiguration -Name JEADemo2 -Path "$env:ProgramData\JEAConfig
 Congratulations!  You have set up your first JEA endpoint.
 
 ### Test Out Your Endpoint
-Re-run the steps listed in the [Using JEA](### Using JEA) section against your endpoint to confirm that your endpoint is operating as intended.
+Re-run the steps listed in the [Using JEA](## Using JEA) section against your endpoint to confirm that your endpoint is operating as intended.
 
 To ensure you are operating against your new endpoint, run the following command instead of STEP 2:
 
@@ -438,7 +438,7 @@ Congratulations, you have created a blank Role Capability File.  It will be used
 
 **PowerShell Module**: A package of PowerShell functionality.  It can contain PowerShell functions, cmdlets, DSC Resources, Role Capabilities, and more.  In order to be automatically loaded, PowerShell Modules must be located on $env:PSModulePath. 
 
-## End to End: Active Directory
+## End to End - Active Directory
 Imagine the scope of your program has increased.  You are now responsible for adding JEA to Domain Controllers to perform Active Directory actions.  The help desk people are going to use JEA to unlock accounts, reset passwords, and do other similar actions.
 
 You need to expose a completely new set of commands to a different group of people.  On top of that, you have a bunch of existing active directory scripts you need to expose.  This section will walk through how to author a Session Configuration and Role Capability for this task.  
