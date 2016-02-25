@@ -55,7 +55,7 @@ Virtual accounts belong to the local "Administrators" security group by default,
 
 ### Explore the experience guide
 Ready to create your first JEA endpoint?
-Check out the [JEA Experience Guide](./Experience Guide.md) to learn how to author, deploy, and use your own JEA endpoint.
+Check out the [JEA Experience Guide](./JEA Guide.md) to learn how to author, deploy, and use your own JEA endpoint.
 The guide gets you started quickly with a pre-built JEA endpoint to get an idea of how the end-user experience feels, then walks you through recreating the endpoint from scratch to help explain session configurations and Role Capabilities.
 
 ### Start authoring your own JEA endpoints
