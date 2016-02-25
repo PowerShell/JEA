@@ -1,6 +1,4 @@
-# Just Enough Administration (JEA) Infrastructure: An Introduction v0.4
-By John Slack 
-(port to Markdown by Steve Lee)
+# Just Enough Administration (JEA) Infrastructure: An Introduction
 
 ## Table of Contents
 After reading this document, you should be able to author, deploy, use, maintain, and audit a Just Enough Administration (JEA) deployment on Windows Server 2016 PP1.  Here are the topics we will cover:  
