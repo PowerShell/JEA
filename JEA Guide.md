@@ -4,23 +4,23 @@
 After reading this document, you should be able to author, deploy, use, maintain, and audit a Just Enough Administration (JEA) deployment.
 Here are the topics covered in this introductory guide:
 
-1.	[Introduction](# Introduction): Briefly review why you should care about JEA
+1.	[Introduction](#introduction): Briefly review why you should care about JEA
 
-2.	[Prerequisites](# Prerequisites): Set up your environment
+2.	[Prerequisites](#prerequisites): Set up your environment
 
-3.	[Using JEA](# Using JEA): Start by understanding the operator experience of using JEA
+3.	[Using JEA](#using-jea): Start by understanding the operator experience of using JEA
 
-4.	[Remake the Demo](# Remake the Demo Endpoint): Create a JEA Session Configuration from scratch
+4.	[Remake the Demo](#remake-the-demo-endpoint): Create a JEA Session Configuration from scratch
 
-5.	[Role Capabilities](# Role Capabilities): Learn about how to customize JEA capabilities with Role Capability Files
+5.	[Role Capabilities](#role-capabilities): Learn about how to customize JEA capabilities with Role Capability Files
 
-6.	[End to End - Active Directory](# End to End - Active Directory): Make a whole new endpoint for managing Active Directory
+6.	[End to End - Active Directory](#end-to-end---active-directory): Make a whole new endpoint for managing Active Directory
 
-7.	[Multi-machine Deployment and Maintenance](# Multi-machine Deployment and Maintenance): Discover how deployment and authoring changes with scale
+7.	[Multi-machine Deployment and Maintenance](#multi-machine-deployment-and-maintenance): Discover how deployment and authoring changes with scale
 
-8.	[Reporting on JEA](# Reporting on JEA): Discover how to audit and report on all JEA actions and infrastructure
+8.	[Reporting on JEA](#reporting-on-jea): Discover how to audit and report on all JEA actions and infrastructure
 
-9.	[Appendix](# Appendix): Important skills and discussion points
+9.	[Appendix](#appendix): Important skills and discussion points
 
 ## Introduction
 
@@ -47,7 +47,7 @@ Before starting this section, please ensure the following:
 1. JEA is available on your system. Check out the [README](./README.md) for the current supported operating systems and required downloads.
 2. You have administrative rights on the computer where you are trying out JEA.
 3. The computer is domain joined.
-See the [Creating a Domain Controller](# Creating a Domain Controller) section to quickly set up a new domain on a server if you don't already have one.
+See the [Creating a Domain Controller](#creating-a-domain-controller) section to quickly set up a new domain on a server if you don't already have one.
 
 ### Enable PowerShell Remoting
 Management with JEA occurs through PowerShell Remoting.
@@ -67,7 +67,7 @@ You will give these non-administrators access to JEA.
 Anytime you see the `$NonAdministrator` variable in a top of a script, assign it to your selected non-administrator users or groups. 
 
 If you created a new domain from scratch, it's much easier.
-Please use the [Set Up Users and Groups](# Set Up Users and Groups) section in the appendix to create a non-administrator users and groups.
+Please use the [Set Up Users and Groups](#set-up-users-and-groups) section in the appendix to create a non-administrator users and groups.
 The default values of `$NonAdministrator` will be the groups created in that section.
 
 ### Set Up Maintenance Role Capability File
@@ -137,7 +137,7 @@ Register-PSSessionConfiguration -Name $sessionName -Path "$env:ProgramData\JEACo
  
 ### Enable PowerShell Module Logging (Optional)
 The following steps enable logging for all PowerShell actions on your system.
-You don't need to enable this for JEA to work, but it will be useful in the [Reporting on JEA](# Reporting on JEA) section.
+You don't need to enable this for JEA to work, but it will be useful in the [Reporting on JEA](#reporting-on-jea) section.
 
 1. Open the Local Group Policy Editor
 2. Navigate to "Computer Configuration\Administrative Templates\Windows Components\Windows PowerShell"
@@ -166,7 +166,7 @@ $NonAdminCred = Get-Credential
 ```
 
 Enter the credentials for your non-administrator account when prompted.
-If you followed the [Set Up Users and Groups](# Set Up Users and Groups) section, they will be:
+If you followed the [Set Up Users and Groups](#set-up-users-and-groups) section, they will be:
 -	Username = "OperatorUser"
 -	Password = "pa$$w0rd"
 
@@ -251,7 +251,7 @@ Based on how you set up a Session Configuration, it can provide different functi
 For JEA, we use Session Configurations to restrict PowerShell to a limited set of functionality and to run as a privileged virtual account.
 
 You already have several registered PowerShell Session Configurations on your machine, each set up slightly differently.
-Most of them come with Windows, but the "JEA_Demo" Session Configuration was set up in the [prerequisites](# Prerequisites) section.
+Most of them come with Windows, but the "JEA_Demo" Session Configuration was set up in the [prerequisites](#prerequisites) section.
 You can see all registered Session Configurations by running the following command in an Administrator PowerShell prompt:
 
 ```PowerShell
@@ -331,7 +331,6 @@ This requires a few pieces of information:
 
 1. The path to the Session Configuration file.
 2. The name of your registered Session Configuration. This is the same name users provide to the "ConfigurationName" parameter when they connect to your endpoint with `Enter-PSSession` or `New-PSSession`.
-3.	[Optional] A custom SDDL that defines access conditions for this Session Configuration. This is only required for scenarios like two factor authentication.  Otherwise, PowerShell uses the "RoleDefinitions" field to determine access.  See [this section](### On SDDL Generation and Maintenance) in the appendix for more information. 
 
 To register the Session Configuration on your local machine, run the following command:
 
@@ -342,7 +341,7 @@ Register-PSSessionConfiguration -Name 'JEADemo2' -Path "$env:ProgramData\JEAConf
 Congratulations! You have set up your JEA endpoint.
 
 ### Test Out Your Endpoint
-Re-run the steps listed in the [Using JEA](# Using JEA) section against your new endpoint to confirm it is operating as intended.
+Re-run the steps listed in the [Using JEA](#using-jea) section against your new endpoint to confirm it is operating as intended.
 Be sure to use the new endpoint name (JEADemo2) when providing the configuration name to Enter-PSSession.
 
 ```PowerShell
@@ -516,7 +515,7 @@ This section will walk through authoring a Session Configuration and Role Capabi
 To follow this section step-by-step, you'll need to be operating on a domain controller.
 If you don't have access to your domain controller, don't worry.
 Try to follow along with by working against some other scenario or role with which you are familiar.
-If you want to quickly set up a new domain controller, check out the [Creating a Domain Controller appendix](# Creating a Domain Controller).
+If you want to quickly set up a new domain controller, check out the [Creating a Domain Controller appendix](#creating-a-domain-controller).
 
 ### Steps to Make a new Role Capability and Session Configuration
 
@@ -652,7 +651,7 @@ Set-ADUser -Identity $Identity -ChangePasswordAtLogon
 Now, your users can simply call `Reset-ContosoUserPassword` and not have to remember the syntax to create a secure string inline.
 
 ### Step 4: Edit the Role Capability File
-In the [Role Capability Creation](# Role Capability Creation) section, you created a blank Role Capability file.
+In the [Role Capability Creation](#role-capability-creation) section, you created a blank Role Capability file.
 In this section, you will fill in the values in that file.
 
 Start by opening the role capability file in ISE.
