@@ -58,6 +58,7 @@ class JeaEndpoint
         $configurationFileArguments = @{
             Path = $psscPath
             RoleDefinitions = $roleDefinitionsHash
+            SessionType = 'RestrictedRemoteServer'
         }
 
         if($this.RunAsVirtualAccountGroups -and $this.GroupManagedServiceAccount)
