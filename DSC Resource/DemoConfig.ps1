@@ -17,5 +17,6 @@ Configuration JeaTest
         RoleDefinitions = "@{ 'CONTOSO\DnsAdmins' = @{ RoleCapabilities = 'DnsAdmin' } }"
         TranscriptDirectory = 'C:\ProgramData\JeaEndpoint\Transcripts'
         ScriptsToProcess = 'C:\ProgramData\JeaEndpoint\startup.ps1'
+        DependsOn = '[File]DnsAdminRoleCapability'
     }
 }
