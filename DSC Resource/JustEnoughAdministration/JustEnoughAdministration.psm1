@@ -216,13 +216,17 @@ class JeaEndpoint
                 Write-Verbose "UserDriveMaximumSize not equal: $($currentInstance.UserDriveMaximumSize)"
                 return $false
             }
-
-            $requiredGroupsHash = $this.ConvertStringToHashtable($this.RequiredGroups)
-            if(-not $this.ComplexObjectsEqual($this.ConvertStringToHashtable($currentInstance.RequiredGroups), $requiredGroupsHash))
-            {
-                Write-Verbose "RequiredGroups not equal: $(ConvertTo-Json $currentInstance.RequiredGroups -Depth 100)"
-                return $false
+            # Check for null required groups
+            if($currentInstance.RequiredGroups -ne $null)
+            {    
+                $requiredGroupsHash = $this.ConvertStringToHashtable($this.RequiredGroups)
+                if(-not $this.ComplexObjectsEqual($this.ConvertStringToHashtable($currentInstance.RequiredGroups), $requiredGroupsHash))
+                {
+                    Write-Verbose "RequiredGroups not equal: $(ConvertTo-Json $currentInstance.RequiredGroups -Depth 100)"
+                    return $false
+                }
             }
+            
 
             return $true
         }
