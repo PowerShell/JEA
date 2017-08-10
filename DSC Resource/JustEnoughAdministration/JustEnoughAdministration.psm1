@@ -216,13 +216,17 @@ class JeaEndpoint
                 Write-Verbose "UserDriveMaximumSize not equal: $($currentInstance.UserDriveMaximumSize)"
                 return $false
             }
-
-            $requiredGroupsHash = $this.ConvertStringToHashtable($this.RequiredGroups)
-            if(-not $this.ComplexObjectsEqual($this.ConvertStringToHashtable($currentInstance.RequiredGroups), $requiredGroupsHash))
-            {
-                Write-Verbose "RequiredGroups not equal: $(ConvertTo-Json $currentInstance.RequiredGroups -Depth 100)"
-                return $false
+            # Check for null required groups
+            if($currentInstance.RequiredGroups -ne $null)
+            {    
+                $requiredGroupsHash = $this.ConvertStringToHashtable($this.RequiredGroups)
+                if(-not $this.ComplexObjectsEqual($this.ConvertStringToHashtable($currentInstance.RequiredGroups), $requiredGroupsHash))
+                {
+                    Write-Verbose "RequiredGroups not equal: $(ConvertTo-Json $currentInstance.RequiredGroups -Depth 100)"
+                    return $false
+                }
             }
+            
 
             return $true
         }
@@ -249,6 +253,7 @@ class JeaEndpoint
     ## Convert a string representing a Hashtable into a Hashtable
     hidden [Hashtable] ConvertStringToHashtable($hashtableAsString)
     {
+        if ($hashtableAsString -eq $null){$hashtableAsString = '@{}'}
         $ast = [System.Management.Automation.Language.Parser]::ParseInput($hashtableAsString, [ref] $null, [ref] $null)
         $data = $ast.Find( { $args[0] -is [System.Management.Automation.Language.HashtableAst] }, $false )
 
