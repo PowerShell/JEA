@@ -280,7 +280,7 @@ class JeaEndpoint
             $returnObject.EndpointName = $sessionConfiguration.Name
 
             ## Convert the hashtable to a string, as that is the input format required by DSC
-            $returnObject.RoleDefinitions = $rawConfigFileArguments.KeyValuePairs | ? { $_.Item1.Extent.Text -eq 'RoleDefinitions' } | % { $_.Item2.Extent.Text }
+            $returnObject.RoleDefinitions = $rawConfigFileArguments.KeyValuePairs | Where-Object { $_.Item1.Extent.Text -eq 'RoleDefinitions' } | ForEach-Object { $_.Item2.Extent.Text }
 
             if($sessionConfiguration.RunAsVirtualAccountGroups)
             {
@@ -314,7 +314,7 @@ class JeaEndpoint
 
             if($configFileArguments.RequiredGroups)
             {
-                $returnObject.RequiredGroups = $rawConfigFileArguments.KeyValuePairs | ? { $_.Item1.Extent.Text -eq 'RequiredGroups' } | % { $_.Item2.Extent.Text }
+                $returnObject.RequiredGroups = $rawConfigFileArguments.KeyValuePairs | Where-Object { $_.Item1.Extent.Text -eq 'RequiredGroups' } | ForEach-Object { $_.Item2.Extent.Text }
             }
 
             return $returnObject
