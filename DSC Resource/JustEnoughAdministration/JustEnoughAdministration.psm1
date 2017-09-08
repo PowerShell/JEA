@@ -216,13 +216,16 @@ class JeaEndpoint
                 Write-Verbose "UserDriveMaximumSize not equal: $($currentInstance.UserDriveMaximumSize)"
                 return $false
             }
-
+            # Check for null required groups
+               
             $requiredGroupsHash = $this.ConvertStringToHashtable($this.RequiredGroups)
             if(-not $this.ComplexObjectsEqual($this.ConvertStringToHashtable($currentInstance.RequiredGroups), $requiredGroupsHash))
             {
                 Write-Verbose "RequiredGroups not equal: $(ConvertTo-Json $currentInstance.RequiredGroups -Depth 100)"
                 return $false
             }
+            
+            
 
             return $true
         }
@@ -249,6 +252,10 @@ class JeaEndpoint
     ## Convert a string representing a Hashtable into a Hashtable
     hidden [Hashtable] ConvertStringToHashtable($hashtableAsString)
     {
+        if ($hashtableAsString -eq $null)
+        {
+            $hashtableAsString = '@{}'
+        }
         $ast = [System.Management.Automation.Language.Parser]::ParseInput($hashtableAsString, [ref] $null, [ref] $null)
         $data = $ast.Find( { $args[0] -is [System.Management.Automation.Language.HashtableAst] }, $false )
 
@@ -276,7 +283,7 @@ class JeaEndpoint
             $returnObject.EndpointName = $sessionConfiguration.Name
 
             ## Convert the hashtable to a string, as that is the input format required by DSC
-            $returnObject.RoleDefinitions = $rawConfigFileArguments.KeyValuePairs | ? { $_.Item1.Extent.Text -eq 'RoleDefinitions' } | % { $_.Item2.Extent.Text }
+            $returnObject.RoleDefinitions = $rawConfigFileArguments.KeyValuePairs | Where-Object { $_.Item1.Extent.Text -eq 'RoleDefinitions' } | ForEach-Object { $_.Item2.Extent.Text }
 
             if($sessionConfiguration.RunAsVirtualAccountGroups)
             {
@@ -310,7 +317,7 @@ class JeaEndpoint
 
             if($configFileArguments.RequiredGroups)
             {
-                $returnObject.RequiredGroups = $rawConfigFileArguments.KeyValuePairs | ? { $_.Item1.Extent.Text -eq 'RequiredGroups' } | % { $_.Item2.Extent.Text }
+                $returnObject.RequiredGroups = $rawConfigFileArguments.KeyValuePairs | Where-Object { $_.Item1.Extent.Text -eq 'RequiredGroups' } | ForEach-Object { $_.Item2.Extent.Text }
             }
 
             return $returnObject
