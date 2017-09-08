@@ -252,7 +252,10 @@ class JeaEndpoint
     ## Convert a string representing a Hashtable into a Hashtable
     hidden [Hashtable] ConvertStringToHashtable($hashtableAsString)
     {
-        if ($hashtableAsString -eq $null){$hashtableAsString = '@{}'}
+        if ($hashtableAsString -eq $null)
+        {
+            $hashtableAsString = '@{}'
+        }
         $ast = [System.Management.Automation.Language.Parser]::ParseInput($hashtableAsString, [ref] $null, [ref] $null)
         $data = $ast.Find( { $args[0] -is [System.Management.Automation.Language.HashtableAst] }, $false )
 
