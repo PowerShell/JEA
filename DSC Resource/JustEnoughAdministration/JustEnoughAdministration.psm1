@@ -74,7 +74,7 @@ class JeaEndpoint
         }
         elseif($this.GroupManagedServiceAccount)
         {
-            $configurationFileArguments["GroupManagedServiceAccount"] = $this.GroupManagedServiceAccount
+            $configurationFileArguments["GroupManagedServiceAccount"] = $this.GroupManagedServiceAccount -replace '\$$', ''
         }       
         else
         {
@@ -187,7 +187,7 @@ class JeaEndpoint
                 return $false
             }
 
-            if($currentInstance.GroupManagedServiceAccount -ne $this.GroupManagedServiceAccount)
+            if($currentInstance.GroupManagedServiceAccount -ne ($this.GroupManagedServiceAccount -replace '\$$', ''))
             {
                 Write-Verbose "GroupManagedServiceAccount not equal: $($currentInstance.GroupManagedServiceAccount)"
                 return $false
@@ -290,9 +290,9 @@ class JeaEndpoint
                 $returnObject.RunAsVirtualAccountGroups = $sessionConfiguration.RunAsVirtualAccountGroups -split ';'
             }
 
-            if($sessionConfiguration.RunAsUser)
+            if($sessionConfiguration.GroupManagedServiceAccount)
             {
-                $returnObject.GroupManagedServiceAccount = $sessionConfiguration.RunAsUser
+                $returnObject.GroupManagedServiceAccount = $sessionConfiguration.GroupManagedServiceAccount
             }
 
             if($configFileArguments.TranscriptDirectory)
