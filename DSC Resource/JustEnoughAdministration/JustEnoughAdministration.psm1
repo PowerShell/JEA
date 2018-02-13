@@ -187,7 +187,8 @@ class JeaEndpoint
                 return $false
             }
 
-            if ($currentInstance.GroupManagedServiceAccount -or $this.GroupManagedServiceAccount) {
+            if($currentInstance.GroupManagedServiceAccount -or $this.GroupManagedServiceAccount)
+            {
                 if($currentInstance.GroupManagedServiceAccount -ne ($this.GroupManagedServiceAccount -replace '\$$', ''))
                 {
                     Write-Verbose "GroupManagedServiceAccount not equal: $($currentInstance.GroupManagedServiceAccount)"
