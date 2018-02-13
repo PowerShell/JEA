@@ -39,6 +39,11 @@ class JeaEndpoint
     [Dscproperty()]
     [long] $UserDriveMaximumSize
 
+    ## The optional number of seconds to wait for registering the endpoint to complete.
+    ## The default is 10 seconds.
+    [Dscproperty()]
+    [int] $HungRegistrationTimeout = 10
+
     ## The optional expression declaring which domain groups (for example,
     ## two-factor authenticated users) connected users must be members of. This
     ## should be a string that represents the Hashtable used for the RequiredGroups
@@ -139,7 +144,57 @@ class JeaEndpoint
 
             ## Create the configuration file
             New-PSSessionConfigurationFile @configurationFileArguments
-            Register-PSSessionConfiguration -Name $this.EndpointName -Path $psscPath
+
+            ## Register the configuration file
+            # Register-PSSessionConfiguration has been hanging because the WinRM service is stuck in Stopping state
+            # therefore we need to run Register-PSSessionConfiguration within a job to allow us to handle a hanging WinRM service
+            Start-Job -ScriptBlock {
+                param($endpointName, $psscPath)
+                Register-PSSessionConfiguration -Name $endpointName -Path $psscPath -Force -ErrorAction Stop
+            } -ArgumentList ($this.EndpointName), $psscPath | Wait-Job -Timeout ($this.HungRegistrationTimeout) | Remove-Job -Force -ErrorAction SilentlyContinue
+            # Note: above I used the "ArgumentList" rather than "$using:" because I don't know if "$using:this.EndpointName" will work
+
+            # If WinRM is stilling Stopping after the job has completed / exceeded $this.HungRegistrationTimeout, force kill the underlying WinRM process
+            $winRMService = Get-Service -Name 'WinRM'
+            if($winRMService -and $winRMService.Status -eq 'StopPending')
+            {
+                $processId = Get-CimInstance -ClassName 'Win32_Service' -Filter "Name LIKE 'WinRM'" | Select-Object -Expand 'ProcessId'
+                $serviceList = Get-CimInstance -ClassName 'Win32_Service' -Filter "ProcessId=$processId" | Select-Object -Expand 'Name'
+                $failureList = @()
+                Write-Verbose "WinRM seems hanging in Stopping state. Forcing process $processId to stop"
+                try
+                {
+                    Stop-Process -Id $processId -Force
+                    Start-Sleep -Seconds 5
+                    Write-Verbose "Restarting services: $($serviceList -join ', ')"
+                    # Then restart all services that shared the same process
+                    foreach($service in $serviceList)
+                    {
+                        try
+                        {
+                            Start-Service -Name $service
+                        }
+                        catch
+                        {
+                            $failureList += "Start service $service"
+                        }
+                    }
+                } 
+                catch 
+                {
+                    $failureList += "Kill WinRM process"
+                }
+            
+                if($failureList)
+                {
+                    Write-Verbose "Failed to execute following operation(s): $($failureList -join ', ')"
+                }
+            }
+            elseif($winRMService -and $winRMService.Status -eq 'Stopped')
+            {
+                Write-Verbose 'Starting WinRM service'
+                Start-Service -Name 'WinRM'
+            }
 
             ## Enable PowerShell logging on the system
             $basePath = "HKLM:\Software\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging"
@@ -270,10 +325,16 @@ class JeaEndpoint
     {
         $returnObject = New-Object JeaEndpoint
         
-        $sessionConfiguration = Get-PSSessionConfiguration -Name ($this.EndpointName + "*") |
+        $sessionConfiguration = $null
+        $winRMService = Get-Service -Name 'WinRM'
+        if($winRMService -and $winRMService.Status -eq 'Running')
+        {
+            #This code will fail if winrm not running
+            $sessionConfiguration = Get-PSSessionConfiguration -Name ($this.EndpointName + "*") |
             Where-Object Name -eq $this.EndpointName
+        }
 
-        if((-not $sessionConfiguration) -or (-not $sessionConfiguration.ConfigFilePath))
+        if(-not $sessionConfiguration -or -not $sessionConfiguration.ConfigFilePath)
         {
             return $returnObject
         }
