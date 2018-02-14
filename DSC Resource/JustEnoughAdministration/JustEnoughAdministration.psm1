@@ -121,16 +121,14 @@ class JeaEndpoint
             if($this.EndpointName -eq "Microsoft.PowerShell")
             {
                 $breakTheGlassName = "Microsoft.PowerShell.Restricted"
-                if(-not (Get-PSSessionConfiguration -Name ($breakTheGlassName + "*") |
-                    Where-Object Name -eq $breakTheGlassName))
+                if(-not (Get-PSSessionConfiguration -Name $breakTheGlassName -ErrorAction SilentlyContinue))
                 {
                     Register-PSSessionConfiguration -Name $breakTheGlassName
                 }
             }
 
             ## Remove the previous one, if any.
-            $existingConfiguration = Get-PSSessionConfiguration -Name ($this.EndpointName + "*") |
-                Where-Object Name -eq $this.EndpointName
+            $existingConfiguration = Get-PSSessionConfiguration -Name $this.EndpointName -ErrorAction SilentlyContinue
 
             if($existingConfiguration)
             {
@@ -266,9 +264,7 @@ class JeaEndpoint
     [JeaEndpoint] Get()
     {
         $returnObject = New-Object JeaEndpoint
-        
-        $sessionConfiguration = Get-PSSessionConfiguration -Name ($this.EndpointName + "*") |
-            Where-Object Name -eq $this.EndpointName
+        $sessionConfiguration = Get-PSSessionConfiguration -Name $this.EndpointName -ErrorAction SilentlyContinue
 
         if((-not $sessionConfiguration) -or (-not $sessionConfiguration.ConfigFilePath))
         {
