@@ -132,7 +132,7 @@ class JeaEndpoint
 
             if($existingConfiguration)
             {
-                Unregister-PSSessionConfiguration -Name $this.EndpointName
+                Unregister-PSSessionConfiguration -Name $this.EndpointName -Force -WarningAction SilentlyContinue
             }
 
             ## Create the configuration file
