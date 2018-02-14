@@ -121,25 +121,23 @@ class JeaEndpoint
             if($this.EndpointName -eq "Microsoft.PowerShell")
             {
                 $breakTheGlassName = "Microsoft.PowerShell.Restricted"
-                if(-not (Get-PSSessionConfiguration -Name ($breakTheGlassName + "*") |
-                    Where-Object Name -eq $breakTheGlassName))
+                if(-not (Get-PSSessionConfiguration -Name $breakTheGlassName -ErrorAction SilentlyContinue))
                 {
-                    Register-PSSessionConfiguration -Name $breakTheGlassName
+                    Register-PSSessionConfiguration -Name $breakTheGlassName -Force -WarningAction SilentlyContinue | Out-Null
                 }
             }
 
             ## Remove the previous one, if any.
-            $existingConfiguration = Get-PSSessionConfiguration -Name ($this.EndpointName + "*") |
-                Where-Object Name -eq $this.EndpointName
+            $existingConfiguration = Get-PSSessionConfiguration -Name $this.EndpointName -ErrorAction SilentlyContinue
 
             if($existingConfiguration)
             {
-                Unregister-PSSessionConfiguration -Name $this.EndpointName
+                Unregister-PSSessionConfiguration -Name $this.EndpointName -Force -WarningAction SilentlyContinue
             }
 
             ## Create the configuration file
             New-PSSessionConfigurationFile @configurationFileArguments
-            Register-PSSessionConfiguration -Name $this.EndpointName -Path $psscPath
+            Register-PSSessionConfiguration -Name $this.EndpointName -Path $psscPath -Force -WarningAction SilentlyContinue | Out-Null
 
             ## Enable PowerShell logging on the system
             $basePath = "HKLM:\Software\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging"
@@ -266,9 +264,7 @@ class JeaEndpoint
     [JeaEndpoint] Get()
     {
         $returnObject = New-Object JeaEndpoint
-        
-        $sessionConfiguration = Get-PSSessionConfiguration -Name ($this.EndpointName + "*") |
-            Where-Object Name -eq $this.EndpointName
+        $sessionConfiguration = Get-PSSessionConfiguration -Name $this.EndpointName -ErrorAction SilentlyContinue
 
         if((-not $sessionConfiguration) -or (-not $sessionConfiguration.ConfigFilePath))
         {
