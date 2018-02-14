@@ -123,7 +123,7 @@ class JeaEndpoint
                 $breakTheGlassName = "Microsoft.PowerShell.Restricted"
                 if(-not (Get-PSSessionConfiguration -Name $breakTheGlassName -ErrorAction SilentlyContinue))
                 {
-                    Register-PSSessionConfiguration -Name $breakTheGlassName
+                    Register-PSSessionConfiguration -Name $breakTheGlassName -Force -WarningAction SilentlyContinue | Out-Null
                 }
             }
 
@@ -137,7 +137,7 @@ class JeaEndpoint
 
             ## Create the configuration file
             New-PSSessionConfigurationFile @configurationFileArguments
-            Register-PSSessionConfiguration -Name $this.EndpointName -Path $psscPath
+            Register-PSSessionConfiguration -Name $this.EndpointName -Path $psscPath -Force -WarningAction SilentlyContinue | Out-Null
 
             ## Enable PowerShell logging on the system
             $basePath = "HKLM:\Software\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging"
