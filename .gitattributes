@@ -1,2 +1,4 @@
-*.pssc text
-*.psrc text
+*.pssc text=auto
+*.pssc diff
+*.psrc text=auto
+*.psrc diff
