@@ -1,6 +1,16 @@
+enum Ensure
+{
+    Present
+    Absent
+}
+
 [DscResource()]
 class JeaEndpoint
 {
+    ## The optional state that ensures the endpoint is present or absent. The defualt value is [Ensure]::Present.
+    [DscProperty()]
+    [Ensure] $Ensure = [Ensure]::Present
+
     ## The mandatory endpoint name. Use 'Microsoft.PowerShell' by default.
     [DscProperty(Key)]
     [string] $EndpointName = 'Microsoft.PowerShell'
@@ -45,73 +55,76 @@ class JeaEndpoint
     ## property in New-PSSessionConfigurationFile, such as:
     ## RequiredGroups = '@{ And = "RequiredGroup1", @{ Or = "OptionalGroup1", "OptionalGroup2" } }'
     [Dscproperty()]
-    [string] $RequiredGroups
+    [string] $RequiredGroups    
     
     ## Applies the JEA configuration
     [void] Set()
     {
         $psscPath = Join-Path ([IO.Path]::GetTempPath()) ([IO.Path]::GetRandomFileName() + ".pssc")
 
-        ## Convert the RoleDefinitions string to the actual Hashtable
-        $roleDefinitionsHash = $this.ConvertStringToHashtable($this.RoleDefinitions)
+        if ($this.Ensure -eq [Ensure]::Present)
+        {
+            ## Convert the RoleDefinitions string to the actual Hashtable
+            $roleDefinitionsHash = $this.ConvertStringToHashtable($this.RoleDefinitions)
 
-        $configurationFileArguments = @{
-            Path = $psscPath
-            RoleDefinitions = $roleDefinitionsHash
-            SessionType = 'RestrictedRemoteServer'
-        }
+            $configurationFileArguments = @{
+                Path = $psscPath
+                RoleDefinitions = $roleDefinitionsHash
+                SessionType = 'RestrictedRemoteServer'
+            }
 
-        if($this.RunAsVirtualAccountGroups -and $this.GroupManagedServiceAccount)
-        {
-            throw "The RunAsVirtualAccountGroups setting can not be used when a configuration is set to run as a Group Managed Service Account"
-        }
-        
-        ## Set up the JEA identity
-        if($this.RunAsVirtualAccountGroups)
-        {
-            $configurationFileArguments["RunAsVirtualAccount"] = $true
-            $configurationFileArguments["RunAsVirtualAccountGroups"] = $this.RunAsVirtualAccountGroups
-        }
-        elseif($this.GroupManagedServiceAccount)
-        {
-            $configurationFileArguments["GroupManagedServiceAccount"] = $this.GroupManagedServiceAccount -replace '\$$', ''
-        }       
-        else
-        {
-            $configurationFileArguments["RunAsVirtualAccount"] = $true
-        }
-        
-        ## Transcripts
-        if($this.TranscriptDirectory)
-        {
-            $configurationFileArguments["TranscriptDirectory"] = $this.TranscriptDirectory
-        }
+            if($this.RunAsVirtualAccountGroups -and $this.GroupManagedServiceAccount)
+            {
+                throw "The RunAsVirtualAccountGroups setting can not be used when a configuration is set to run as a Group Managed Service Account"
+            }
+            
+            ## Set up the JEA identity
+            if($this.RunAsVirtualAccountGroups)
+            {
+                $configurationFileArguments["RunAsVirtualAccount"] = $true
+                $configurationFileArguments["RunAsVirtualAccountGroups"] = $this.RunAsVirtualAccountGroups
+            }
+            elseif($this.GroupManagedServiceAccount)
+            {
+                $configurationFileArguments["GroupManagedServiceAccount"] = $this.GroupManagedServiceAccount -replace '\$$', ''
+            }       
+            else
+            {
+                $configurationFileArguments["RunAsVirtualAccount"] = $true
+            }
+            
+            ## Transcripts
+            if($this.TranscriptDirectory)
+            {
+                $configurationFileArguments["TranscriptDirectory"] = $this.TranscriptDirectory
+            }
 
-        ## Startup scripts
-        if($this.ScriptsToProcess)
-        {
-            $configurationFileArguments["ScriptsToProcess"] = $this.ScriptsToProcess
-        }
+            ## Startup scripts
+            if($this.ScriptsToProcess)
+            {
+                $configurationFileArguments["ScriptsToProcess"] = $this.ScriptsToProcess
+            }
 
-        ## Mount user drive
-        if($this.MountUserDrive)
-        {
-            $configurationFileArguments["MountUserDrive"] = $this.MountUserDrive
-        }
+            ## Mount user drive
+            if($this.MountUserDrive)
+            {
+                $configurationFileArguments["MountUserDrive"] = $this.MountUserDrive
+            }
 
-        ## User drive maximum size
-        if($this.UserDriveMaximumSize)
-        {
-            $configurationFileArguments["UserDriveMaximumSize"] = $this.UserDriveMaximumSize
-            $configurationFileArguments["MountUserDrive"] = $true
-        }
-        
-        ## Required groups
-        if($this.RequiredGroups)
-        {
-            ## Convert the RequiredGroups string to the actual Hashtable
-            $requiredGroupsHash = $this.ConvertStringToHashtable($this.RequiredGroups)
-            $configurationFileArguments["RequiredGroups"] = $requiredGroupsHash
+            ## User drive maximum size
+            if($this.UserDriveMaximumSize)
+            {
+                $configurationFileArguments["UserDriveMaximumSize"] = $this.UserDriveMaximumSize
+                $configurationFileArguments["MountUserDrive"] = $true
+            }
+            
+            ## Required groups
+            if($this.RequiredGroups)
+            {
+                ## Convert the RequiredGroups string to the actual Hashtable
+                $requiredGroupsHash = $this.ConvertStringToHashtable($this.RequiredGroups)
+                $configurationFileArguments["RequiredGroups"] = $requiredGroupsHash
+            }
         }
 
         ## Register the endpoint
@@ -121,7 +134,7 @@ class JeaEndpoint
             if($this.EndpointName -eq "Microsoft.PowerShell")
             {
                 $breakTheGlassName = "Microsoft.PowerShell.Restricted"
-                if(-not (Get-PSSessionConfiguration -Name $breakTheGlassName -ErrorAction SilentlyContinue))
+                if(-not (Get-PSSessionConfiguration -Name $breakTheGlassName -ErrorAction SilentlyContinue) -and ($this.Ensure -eq [Ensure]::Present))
                 {
                     Register-PSSessionConfiguration -Name $breakTheGlassName -Force -WarningAction SilentlyContinue | Out-Null
                 }
@@ -135,23 +148,29 @@ class JeaEndpoint
                 Unregister-PSSessionConfiguration -Name $this.EndpointName -Force -WarningAction SilentlyContinue
             }
 
-            ## Create the configuration file
-            New-PSSessionConfigurationFile @configurationFileArguments
-            Register-PSSessionConfiguration -Name $this.EndpointName -Path $psscPath -Force -WarningAction SilentlyContinue | Out-Null
-
-            ## Enable PowerShell logging on the system
-            $basePath = "HKLM:\Software\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging"
-
-            if(-not (Test-Path $basePath))
+            if ($this.Ensure -eq [Ensure]::Present)
             {
-                $null = New-Item $basePath -Force
+                ## Create the configuration file
+                New-PSSessionConfigurationFile @configurationFileArguments
+                Register-PSSessionConfiguration -Name $this.EndpointName -Path $psscPath -Force -WarningAction SilentlyContinue | Out-Null
+
+                ## Enable PowerShell logging on the system
+                $basePath = "HKLM:\Software\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging"
+
+                if(-not (Test-Path $basePath))
+                {
+                    $null = New-Item $basePath -Force
+                }
+        
+                Set-ItemProperty $basePath -Name EnableScriptBlockLogging -Value "1"
             }
-    
-            Set-ItemProperty $basePath -Name EnableScriptBlockLogging -Value "1"
         }
         finally
         {
-            Remove-Item $psscPath
+            if (Test-Path $psscPath)
+            {
+                Remove-Item $psscPath
+            }
         }
     }
     
@@ -159,6 +178,18 @@ class JeaEndpoint
     [bool] Test()
     {
         $currentInstance = $this.Get()
+
+        # short-circuit if the resource is not present and is not supposed to be present
+        if ($this.Ensure -eq [Ensure]::Absent)
+        {
+            if ($currentInstance.Ensure -eq [Ensure]::Absent)
+            {
+                return $true
+            }
+
+            Write-Verbose "EndpointName present: $($currentInstance.EndpointName)"
+            return $false
+        }
 
         ## If this was configured with our mandatory property (RoleDefinitions), dig deeper
         if($currentInstance.RoleDefinitions)
@@ -217,16 +248,15 @@ class JeaEndpoint
                 Write-Verbose "UserDriveMaximumSize not equal: $($currentInstance.UserDriveMaximumSize)"
                 return $false
             }
+            
             # Check for null required groups
-               
             $requiredGroupsHash = $this.ConvertStringToHashtable($this.RequiredGroups)
+
             if(-not $this.ComplexObjectsEqual($this.ConvertStringToHashtable($currentInstance.RequiredGroups), $requiredGroupsHash))
             {
                 Write-Verbose "RequiredGroups not equal: $(ConvertTo-Json $currentInstance.RequiredGroups -Depth 100)"
                 return $false
             }
-            
-            
 
             return $true
         }
@@ -271,6 +301,7 @@ class JeaEndpoint
 
         if((-not $sessionConfiguration) -or (-not $sessionConfiguration.ConfigFilePath))
         {
+            $returnObject.Ensure = [Ensure]::Absent
             return $returnObject
         }
         else
