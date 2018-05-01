@@ -49,11 +49,6 @@ class JeaEndpoint
     [Dscproperty()]
     [long] $UserDriveMaximumSize
 
-    ## The optional number of seconds to wait for registering the endpoint to complete.
-    ## The default is 10 seconds.
-    [Dscproperty()]
-    [int] $HungRegistrationTimeout = 10
-
     ## The optional expression declaring which domain groups (for example,
     ## two-factor authenticated users) connected users must be members of. This
     ## should be a string that represents the Hashtable used for the RequiredGroups
@@ -127,6 +122,10 @@ class JeaEndpoint
     ## The optional assemblies to load when applied to a session
     [Dscproperty()]
     [string[]] $AssembliesToLoad
+
+    ## The optional number of seconds to wait for registering the endpoint to complete.
+    [Dscproperty()]
+    [int] $HungRegistrationTimeout = 10
     
     ## Applies the JEA configuration
     [void] Set()
