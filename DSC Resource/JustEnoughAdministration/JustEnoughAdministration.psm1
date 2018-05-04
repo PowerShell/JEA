@@ -126,10 +126,12 @@ class JeaEndpoint
     ## The optional number of seconds to wait for registering the endpoint to complete.
     [Dscproperty()]
     [int] $HungRegistrationTimeout = 10
-    
+
     ## Applies the JEA configuration
     [void] Set()
     {
+        $ErrorActionPreference = 'Stop'
+
         $psscPath = Join-Path ([IO.Path]::GetTempPath()) ([IO.Path]::GetRandomFileName() + ".pssc")
         $configurationFileArguments = @{
             Path = $psscPath
@@ -145,7 +147,7 @@ class JeaEndpoint
 
             ## Convert the RoleDefinitions string to the actual Hashtable
             $configurationFileArguments["RoleDefinitions"] = $this.ConvertStringToHashtable($this.RoleDefinitions)
-            
+
             ## Set up the JEA identity
             if ($this.RunAsVirtualAccountGroups)
             {
@@ -155,12 +157,12 @@ class JeaEndpoint
             elseif ($this.GroupManagedServiceAccount)
             {
                 $configurationFileArguments["GroupManagedServiceAccount"] = $this.GroupManagedServiceAccount -replace '\$$', ''
-            }       
+            }
             else
             {
                 $configurationFileArguments["RunAsVirtualAccount"] = $true
             }
-            
+
             ## Transcripts
             if ($this.TranscriptDirectory)
             {
@@ -185,7 +187,7 @@ class JeaEndpoint
                 $configurationFileArguments["UserDriveMaximumSize"] = $this.UserDriveMaximumSize
                 $configurationFileArguments["MountUserDrive"] = $true
             }
-            
+
             ## Required groups
             if ($this.RequiredGroups)
             {
@@ -312,7 +314,7 @@ class JeaEndpoint
                 {
                     $null = New-Item $basePath -Force
                 }
-        
+
                 Set-ItemProperty $basePath -Name EnableScriptBlockLogging -Value "1"
             }
         }
@@ -324,7 +326,7 @@ class JeaEndpoint
             }
         }
     }
-    
+
     # Tests if the resource is in the desired state.
     [bool] Test()
     {
@@ -341,10 +343,11 @@ class JeaEndpoint
             Write-Verbose "EndpointName present: $($currentInstance.EndpointName)"
             return $false
         }
-        
+
         ## If this was configured with our mandatory property (RoleDefinitions), dig deeper
         if (-not $currentInstance.RoleDefinitions)
         {
+            Write-Verbose "No RoleDefinitions found"
             return $false
         }
 
@@ -401,7 +404,7 @@ class JeaEndpoint
             Write-Verbose "UserDriveMaximumSize not equal: $($currentInstance.UserDriveMaximumSize)"
             return $false
         }
-        
+
         # Check for null required groups
         $requiredGroupsHash = $this.ConvertStringToHashtable($this.RequiredGroups)
 
@@ -422,7 +425,7 @@ class JeaEndpoint
             Write-Verbose "VisibleAliases not equal: $(ConvertTo-Json $currentInstance.VisibleAliases -Depth 100)"
             return $false
         }
-        
+
         if (-not $this.ComplexObjectsEqual($this.ConvertStringToArrayOfObject($currentInstance.VisibleCmdlets), $this.ConvertStringToArrayOfObject($this.VisibleCmdlets)))
         {
             Write-Verbose "VisibleCmdlets not equal: $(ConvertTo-Json $currentInstance.VisibleCmdlets -Depth 100)"
@@ -434,7 +437,7 @@ class JeaEndpoint
             Write-Verbose "VisibleFunctions not equal: $(ConvertTo-Json $currentInstance.VisibleFunctions -Depth 100)"
             return $false
         }
-        
+
         if (-not $this.ComplexObjectsEqual($currentInstance.VisibleExternalCommands, $this.VisibleExternalCommands))
         {
             Write-Verbose "VisibleExternalCommands not equal: $(ConvertTo-Json $currentInstance.VisibleExternalCommands -Depth 100)"
@@ -446,7 +449,7 @@ class JeaEndpoint
             Write-Verbose "VisibleProviders not equal: $(ConvertTo-Json $currentInstance.VisibleProviders -Depth 100)"
             return $false
         }
-        
+
         if (-not $this.ComplexObjectsEqual($this.ConvertStringToArrayOfHashtable($currentInstance.AliasDefinitions), $this.ConvertStringToArrayOfHashtable($this.AliasDefinitions)))
         {
             Write-Verbose "AliasDefinitions not equal: $(ConvertTo-Json $currentInstance.AliasDefinitions -Depth 100)"
@@ -498,7 +501,7 @@ class JeaEndpoint
     {
         $json1 = ConvertTo-Json -InputObject $object1 -Depth 100
         $json2 = ConvertTo-Json -InputObject $object2 -Depth 100
-        
+
         if ($json1 -ne $json2)
         {
             Write-Verbose "object1: $json1"
@@ -543,7 +546,7 @@ class JeaEndpoint
 
             return $false
         }
-            
+
         $rootAst = [System.Management.Automation.Language.Parser]::ParseInput($literalString, [ref] $null, [ref] $null)
         $data = $rootAst.FindAll($predicate, $false)
 
@@ -604,7 +607,7 @@ class JeaEndpoint
 
             return $false
         }
-        
+
         $rootAst = [System.Management.Automation.Language.Parser]::ParseInput($literalString, [ref] $null, [ref] $null)
         $data = $rootAst.FindAll($predicate, $false)
 
@@ -665,23 +668,26 @@ class JeaEndpoint
         $winRMService = Get-Service -Name 'WinRM'
         if ($winRMService -and $winRMService.Status -eq 'Running')
         {
-            Write-Verbose "Will register PSSessionConfiguration with argument: '$Name', '$Path' and '$Timeout'"
+            Write-Verbose "Will register PSSessionConfiguration with argument: Name = '$Name', Path = '$Path' and Timeout = '$Timeout'"
             # Register-PSSessionConfiguration has been hanging because the WinRM service is stuck in Stopping state
             # therefore we need to run Register-PSSessionConfiguration within a job to allow us to handle a hanging WinRM service
             if ($Path)
             {
-                $jobScriptBlock = { 
+                $jobScriptBlock = {
                     $null = Register-PSSessionConfiguration -Name $Using:Name -Path $Using:Path -Force -ErrorAction 'Stop' -WarningAction 'SilentlyContinue'
                 }
             }
             else
             {
-                $jobScriptBlock = { 
+                $jobScriptBlock = {
                     $null = Register-PSSessionConfiguration -Name $Using:Name -Force -ErrorAction 'Stop' -WarningAction 'SilentlyContinue'
                 }
             }
 
-            Start-Job -ScriptBlock $jobScriptBlock | Wait-Job -Timeout $Timeout | Remove-Job -Force -ErrorAction 'SilentlyContinue'
+            $job = Start-Job -ScriptBlock $jobScriptBlock
+            Wait-Job -Job $job -Timeout $Timeout
+            Receive-Job -Job $job
+            Remove-Job -Job $job -Force -ErrorAction 'SilentlyContinue'
 
             # If WinRM is still Stopping after the job has completed / exceeded $Timeout, force kill the underlying WinRM process
             $winRMService = Get-Service -Name 'WinRM'
@@ -709,12 +715,12 @@ class JeaEndpoint
                             $failureList += "Start service $service"
                         }
                     }
-                } 
-                catch 
+                }
+                catch
                 {
                     $failureList += "Kill WinRM process"
                 }
-            
+
                 if ($failureList)
                 {
                     Write-Verbose "Failed to execute following operation(s): $($failureList -join ', ')"
