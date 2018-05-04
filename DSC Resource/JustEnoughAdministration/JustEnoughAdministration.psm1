@@ -356,7 +356,6 @@ class JeaEndpoint
 
         ## Convert the RoleDefinitions string to the actual Hashtable
         $roleDefinitionsHash = $this.ConvertStringToHashtable($this.RoleDefinitions)
-        Write-Verbose ($currentInstance.RoleDefinitions.GetType())
 
         if (-not $this.ComplexObjectsEqual($this.ConvertStringToHashtable($currentInstance.RoleDefinitions), $roleDefinitionsHash))
         {
