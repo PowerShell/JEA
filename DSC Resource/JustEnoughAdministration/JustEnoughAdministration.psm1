@@ -490,17 +490,68 @@ class JeaEndpoint
         return $true
     }
 
-    ## A simple comparison for complex objects used in JEA configurations.
-    ## We don't need anything extensive, as we should be the only ones changing them.
-    hidden [bool] ComplexObjectsEqual($object1, $object2)
+    ## A comparison for complex objects used in JEA configurations.
+    hidden [bool] ComplexObjectsEqual($ReferenceObject, $DifferenceObject)
     {
-        $json1 = ConvertTo-Json -InputObject $object1 -Depth 100
-        Write-Verbose "Argument1: $json1"
+        $ReferenceObject = $ReferenceObject | ConvertTo-Json -Depth 99 | ConvertFrom-Json
+        $DifferenceObject = $DifferenceObject | ConvertTo-Json -Depth 99 | ConvertFrom-Json
 
-        $json2 = ConvertTo-Json -InputObject $object2 -Depth 100
-        Write-Verbose "Argument2: $json2"
+        if ($ReferenceObject -eq $DifferenceObject)
+        {
+            return $true
+        }
 
-        return ($json1 -eq $json2)
+        if ((-not $ReferenceObject) -or (-not $DifferenceObject))
+        {
+            return $false
+        }
+
+        $propertyListReference = @(Get-member -InputObject $ReferenceObject -MemberType 'NoteProperty' | ForEach-Object { $_.Name })
+        $propertyListDifference = @(Get-member -InputObject $DifferenceObject -MemberType 'NoteProperty' | ForEach-Object { $_.Name })
+
+        if (Compare-Object -ReferenceObject $propertyListReference -DifferenceObject $propertyListDifference)
+        {
+            return $false
+        }
+        else
+        {
+            foreach ($property in $propertyListReference)
+            {
+                if ($ReferenceObject.$property.gettype() -ne $DifferenceObject.$property.gettype())
+                {
+                    return $false
+                }
+                else
+                {
+                    if ($ReferenceObject.$property.gettype().Name -eq 'PSCustomObject')
+                    {
+                        if (-not $this.ComplexObjectsEqual($ReferenceObject.$property, $DifferenceObject.$property))
+                        {
+                            return $false
+                        }
+                    }
+                    else
+                    {
+                        if ($ReferenceObject.$property -eq $DifferenceObject.$property)
+                        {
+                            return $true
+                        }
+
+                        if ((-not $ReferenceObject.$property) -or (-not $DifferenceObject.$property))
+                        {
+                            return $false
+                        }
+
+                        if (Compare-Object -ReferenceObject $ReferenceObject.$property -DifferenceObject $DifferenceObject.$property)
+                        {
+                            return $false
+                        }
+                    }
+                }
+            }
+        }
+
+        return $true
     }
 
     ## Convert a string representing a Hashtable into a Hashtable
