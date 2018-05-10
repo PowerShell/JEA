@@ -671,6 +671,22 @@ class JeaEndpoint
             Write-Verbose "Will register PSSessionConfiguration with argument: Name = '$Name', Path = '$Path' and Timeout = '$Timeout'"
             # Register-PSSessionConfiguration has been hanging because the WinRM service is stuck in Stopping state
             # therefore we need to run Register-PSSessionConfiguration within a job to allow us to handle a hanging WinRM service
+
+            # Save the list of services sharing the same process as WinRM in case we have to restart them
+            $processId = Get-CimInstance -ClassName 'Win32_Service' -Filter "Name LIKE 'WinRM'" | Select-Object -Expand 'ProcessId'
+            $serviceList = @(Get-CimInstance -ClassName 'Win32_Service' -Filter "ProcessId=$processId" | Select-Object -Expand 'Name')
+            foreach ($service in $serviceList.clone())
+            {
+                $dependentServiceList = Get-Service -Name $service | ForEach-Object { $_.DependentServices }
+                foreach ($dependentService in $dependentServiceList)
+                {
+                    if ($dependentService.Status -eq 'Running' -and $serviceList -notcontains $dependentService.Name)
+                    {
+                        $serviceList += $dependentService.Name
+                    }
+                }
+            }
+
             if ($Path)
             {
                 $jobScriptBlock = {
@@ -694,7 +710,6 @@ class JeaEndpoint
             if ($winRMService -and $winRMService.Status -eq 'StopPending')
             {
                 $processId = Get-CimInstance -ClassName 'Win32_Service' -Filter "Name LIKE 'WinRM'" | Select-Object -Expand 'ProcessId'
-                $serviceList = Get-CimInstance -ClassName 'Win32_Service' -Filter "ProcessId=$processId" | Select-Object -Expand 'Name'
                 Write-Verbose "WinRM seems hanging in Stopping state. Forcing process $processId to stop"
                 $failureList = @()
                 try
@@ -703,7 +718,7 @@ class JeaEndpoint
                     Stop-Process -Id $processId -Force
                     Start-Sleep -Seconds 5
                     Write-Verbose "Restarting services: $($serviceList -join ', ')"
-                    # Then restart all services that shared the same process
+                    # Then restart all services previously identified
                     foreach($service in $serviceList)
                     {
                         try
