@@ -124,6 +124,7 @@ class JeaEndpoint
     [string[]] $AssembliesToLoad
 
     ## The optional number of seconds to wait for registering the endpoint to complete.
+    ## 0 for no timeout 
     [Dscproperty()]
     [int] $HungRegistrationTimeout = 10
 
@@ -689,62 +690,67 @@ class JeaEndpoint
 
             if ($Path)
             {
-                $jobScriptBlock = {
-                    $null = Register-PSSessionConfiguration -Name $Using:Name -Path $Using:Path -Force -ErrorAction 'Stop' -WarningAction 'SilentlyContinue'
-                }
+                $registerString = "`$null = Register-PSSessionConfiguration -Name '$Name' -Path '$Path' -Force -ErrorAction 'Stop' -WarningAction 'SilentlyContinue'"
             }
             else
             {
-                $jobScriptBlock = {
-                    $null = Register-PSSessionConfiguration -Name $Using:Name -Force -ErrorAction 'Stop' -WarningAction 'SilentlyContinue'
-                }
+                $registerString = "`$null = Register-PSSessionConfiguration -Name '$Name' -Force -ErrorAction 'Stop' -WarningAction 'SilentlyContinue'"
             }
 
-            $job = Start-Job -ScriptBlock $jobScriptBlock
-            Wait-Job -Job $job -Timeout $Timeout
-            Receive-Job -Job $job
-            Remove-Job -Job $job -Force -ErrorAction 'SilentlyContinue'
+            $registerScriptBlock = [Scriptblock]::Create($registerString)
 
-            # If WinRM is still Stopping after the job has completed / exceeded $Timeout, force kill the underlying WinRM process
-            $winRMService = Get-Service -Name 'WinRM'
-            if ($winRMService -and $winRMService.Status -eq 'StopPending')
+            if ($Timeout -gt 0)
             {
-                $processId = Get-CimInstance -ClassName 'Win32_Service' -Filter "Name LIKE 'WinRM'" | Select-Object -Expand 'ProcessId'
-                Write-Verbose "WinRM seems hanging in Stopping state. Forcing process $processId to stop"
-                $failureList = @()
-                try
+                $job = Start-Job -ScriptBlock $registerScriptBlock
+                Wait-Job -Job $job -Timeout $Timeout
+                Receive-Job -Job $job
+                Remove-Job -Job $job -Force -ErrorAction 'SilentlyContinue'
+
+                # If WinRM is still Stopping after the job has completed / exceeded $Timeout, force kill the underlying WinRM process
+                $winRMService = Get-Service -Name 'WinRM'
+                if ($winRMService -and $winRMService.Status -eq 'StopPending')
                 {
-                    # Kill the process hosting WinRM service
-                    Stop-Process -Id $processId -Force
-                    Start-Sleep -Seconds 5
-                    Write-Verbose "Restarting services: $($serviceList -join ', ')"
-                    # Then restart all services previously identified
-                    foreach($service in $serviceList)
+                    $processId = Get-CimInstance -ClassName 'Win32_Service' -Filter "Name LIKE 'WinRM'" | Select-Object -Expand 'ProcessId'
+                    Write-Verbose "WinRM seems hanging in Stopping state. Forcing process $processId to stop"
+                    $failureList = @()
+                    try
                     {
-                        try
+                        # Kill the process hosting WinRM service
+                        Stop-Process -Id $processId -Force
+                        Start-Sleep -Seconds 5
+                        Write-Verbose "Restarting services: $($serviceList -join ', ')"
+                        # Then restart all services previously identified
+                        foreach($service in $serviceList)
                         {
-                            Start-Service -Name $service
-                        }
-                        catch
-                        {
-                            $failureList += "Start service $service"
+                            try
+                            {
+                                Start-Service -Name $service
+                            }
+                            catch
+                            {
+                                $failureList += "Start service $service"
+                            }
                         }
                     }
-                }
-                catch
-                {
-                    $failureList += "Kill WinRM process"
-                }
+                    catch
+                    {
+                        $failureList += "Kill WinRM process"
+                    }
 
-                if ($failureList)
+                    if ($failureList)
+                    {
+                        Write-Verbose "Failed to execute following operation(s): $($failureList -join ', ')"
+                    }
+                }
+                elseif ($winRMService -and $winRMService.Status -eq 'Stopped')
                 {
-                    Write-Verbose "Failed to execute following operation(s): $($failureList -join ', ')"
+                    Write-Verbose '(Re)starting WinRM service'
+                    Start-Service -Name 'WinRM'
                 }
             }
-            elseif ($winRMService -and $winRMService.Status -eq 'Stopped')
+            else 
             {
-                Write-Verbose '(Re)starting WinRM service'
-                Start-Service -Name 'WinRM'
+                Invoke-Command -ScriptBlock $registerScriptBlock
             }
         }
         else
