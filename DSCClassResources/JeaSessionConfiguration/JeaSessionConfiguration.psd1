@@ -1,8 +1,8 @@
 @{
     # Script module or binary module file associated with this manifest.
-    RootModule = 'JustEnoughAdministration.psm1'
+    RootModule = 'JeaSessionConfiguration.psm1'
 
-    DscResourcesToExport = 'JeaEndpoint'
+    DscResourcesToExport = 'JeaSessionConfiguration'
 
     # Version number of this module.
     ModuleVersion = '1.0'

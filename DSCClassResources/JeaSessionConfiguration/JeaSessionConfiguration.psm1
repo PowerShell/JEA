@@ -5,7 +5,7 @@ enum Ensure
 }
 
 [DscResource()]
-class JeaEndpoint
+class JeaSessionConfiguration
 {
     ## The optional state that ensures the endpoint is present or absent. The defualt value is [Ensure]::Present.
     [DscProperty()]
@@ -124,7 +124,7 @@ class JeaEndpoint
     [string[]] $AssembliesToLoad
 
     ## The optional number of seconds to wait for registering the endpoint to complete.
-    ## 0 for no timeout 
+    ## 0 for no timeout
     [Dscproperty()]
     [int] $HungRegistrationTimeout = 10
 
@@ -748,7 +748,7 @@ class JeaEndpoint
                     Start-Service -Name 'WinRM'
                 }
             }
-            else 
+            else
             {
                 Invoke-Command -ScriptBlock $registerScriptBlock
             }
@@ -760,7 +760,7 @@ class JeaEndpoint
     }
 
     # Gets the resource's current state.
-    [JeaEndpoint] Get()
+    [JeaSessionConfiguration] Get()
     {
         $returnObject = New-Object JeaEndpoint
         $sessionConfiguration = $this.GetPSSessionConfiguration($this.EndpointName)
