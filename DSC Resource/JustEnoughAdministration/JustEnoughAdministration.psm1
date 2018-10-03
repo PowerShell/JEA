@@ -133,6 +133,7 @@ class JeaEndpoint
         $psscPath = Join-Path ([IO.Path]::GetTempPath()) ([IO.Path]::GetRandomFileName() + ".pssc")
         $configurationFileArguments = @{
             Path = $psscPath
+            SessionType = 'RestrictedRemoteServer'
         }
 
         if ($this.Ensure -eq [Ensure]::Present)
