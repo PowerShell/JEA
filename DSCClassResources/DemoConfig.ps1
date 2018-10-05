@@ -1,22 +1,25 @@
 Configuration JeaTest
 {
-    Import-DscResource -Module JustEnoughAdministration, PSDesiredStateConfiguration
+    Import-DscResource -Module JeaDsc
 
-    File DnsAdminRoleCapability
+    JeaRoleCapabilities DnsAdminRoleCapability
     {
-        SourcePath = "\\moduleSource\RoleCapabilities\DnsAdmin.psrc"
-        DestinationPath = "C:\Program Files\WindowsPowerShell\Modules\JeaEndpoint\RoleCapabilities\DnsAdmin.psrc"
-        Checksum = "ModifiedDate"
-        Ensure = "Present"
-        Type = "File"
+        Path = 'C:\Program Files\WindowsPowerShell\Modules\JeaDsc\RoleCapabilities\DnsAdmin.psrc'
+        VisibleCmdlets = @{
+            Name = 'Restart-Service'
+            Parameters = @{
+                Name = 'Name'
+                ValidateSet = 'Dns'
+            }
+        }
     }
 
-    JeaEndpoint Endpoint
+    JeaSessionConfiguration Endpoint
     {
         EndpointName = "Microsoft.PowerShell"
         RoleDefinitions = "@{ 'CONTOSO\DnsAdmins' = @{ RoleCapabilities = 'DnsAdmin' } }"
         TranscriptDirectory = 'C:\ProgramData\JeaEndpoint\Transcripts'
         ScriptsToProcess = 'C:\ProgramData\JeaEndpoint\startup.ps1'
-        DependsOn = '[File]DnsAdminRoleCapability'
+        DependsOn = '[JeaRoleCapabilities]DnsAdminRoleCapability'
     }
 }
