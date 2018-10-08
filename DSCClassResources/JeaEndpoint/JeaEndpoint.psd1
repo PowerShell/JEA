@@ -1,6 +1,6 @@
 @{
     # Script module or binary module file associated with this manifest.
-    RootModule = 'JustEnoughAdministration.psm1'
+    RootModule = 'JeaEndpoint.psm1'
 
     DscResourcesToExport = 'JeaEndpoint'
 
