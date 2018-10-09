@@ -762,7 +762,7 @@ class JeaSessionConfiguration
     # Gets the resource's current state.
     [JeaSessionConfiguration] Get()
     {
-        $returnObject = New-Object JeaEndpoint
+        $returnObject = New-Object JeaSessionConfiguration
         $sessionConfiguration = $this.GetPSSessionConfiguration($this.EndpointName)
 
         if ((-not $sessionConfiguration) -or (-not $sessionConfiguration.ConfigFilePath))
