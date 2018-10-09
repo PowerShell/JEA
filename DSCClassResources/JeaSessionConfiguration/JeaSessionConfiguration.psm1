@@ -147,7 +147,7 @@ class JeaSessionConfiguration
             }
 
             ## Convert the RoleDefinitions string to the actual Hashtable
-            $configurationFileArguments["RoleDefinitions"] = $this.ConvertStringToHashtable($this.RoleDefinitions)
+            $configurationFileArguments["RoleDefinitions"] = ConvertStringToHashtable($this.RoleDefinitions)
 
             ## Set up the JEA identity
             if ($this.RunAsVirtualAccountGroups)
@@ -193,14 +193,14 @@ class JeaSessionConfiguration
             if ($this.RequiredGroups)
             {
                 ## Convert the RequiredGroups string to the actual Hashtable
-                $requiredGroupsHash = $this.ConvertStringToHashtable($this.RequiredGroups)
+                $requiredGroupsHash = ConvertStringToHashtable($this.RequiredGroups)
                 $configurationFileArguments["RequiredGroups"] = $requiredGroupsHash
             }
 
             ## Modules to import
             if ($this.ModulesToImport)
             {
-                $configurationFileArguments["ModulesToImport"] = $this.ConvertStringToArrayOfObject($this.ModulesToImport)
+                $configurationFileArguments["ModulesToImport"] = ConvertStringToArrayOfObject($this.ModulesToImport)
             }
 
             ## Visible aliases
@@ -212,13 +212,13 @@ class JeaSessionConfiguration
             ## Visible cmdlets
             if ($this.VisibleCmdlets)
             {
-                $configurationFileArguments["VisibleCmdlets"] = $this.ConvertStringToArrayOfObject($this.VisibleCmdlets)
+                $configurationFileArguments["VisibleCmdlets"] = ConvertStringToArrayOfObject($this.VisibleCmdlets)
             }
 
             ## Visible functions
             if ($this.VisibleFunctions)
             {
-                $configurationFileArguments["VisibleFunctions"] = $this.ConvertStringToArrayOfObject($this.VisibleFunctions)
+                $configurationFileArguments["VisibleFunctions"] = ConvertStringToArrayOfObject($this.VisibleFunctions)
             }
 
             ## Visible external commands
@@ -242,25 +242,25 @@ class JeaSessionConfiguration
             ## Alias definitions
             if ($this.AliasDefinitions)
             {
-                $configurationFileArguments["AliasDefinitions"] = $this.ConvertStringToArrayOfHashtable($this.AliasDefinitions)
+                $configurationFileArguments["AliasDefinitions"] = ConvertStringToArrayOfHashtable($this.AliasDefinitions)
             }
 
             ## Function definitions
             if ($this.FunctionDefinitions)
             {
-                $configurationFileArguments["FunctionDefinitions"] = $this.ConvertStringToArrayOfHashtable($this.FunctionDefinitions)
+                $configurationFileArguments["FunctionDefinitions"] = ConvertStringToArrayOfHashtable($this.FunctionDefinitions)
             }
 
             ## Variable definitions
             if ($this.VariableDefinitions)
             {
-                $configurationFileArguments["VariableDefinitions"] = $this.ConvertStringToArrayOfHashtable($this.VariableDefinitions)
+                $configurationFileArguments["VariableDefinitions"] = ConvertStringToArrayOfHashtable($this.VariableDefinitions)
             }
 
             ## Environment variables
             if ($this.EnvironmentVariables)
             {
-                $configurationFileArguments["EnvironmentVariables"] = $this.ConvertStringToHashtable($this.EnvironmentVariables)
+                $configurationFileArguments["EnvironmentVariables"] = ConvertStringToHashtable($this.EnvironmentVariables)
             }
 
             ## Types to process
@@ -359,9 +359,9 @@ class JeaSessionConfiguration
         }
 
         ## Convert the RoleDefinitions string to the actual Hashtable
-        $roleDefinitionsHash = $this.ConvertStringToHashtable($this.RoleDefinitions)
+        $roleDefinitionsHash = ConvertStringToHashtable($this.RoleDefinitions)
 
-        if (-not $this.ComplexObjectsEqual($this.ConvertStringToHashtable($currentInstance.RoleDefinitions), $roleDefinitionsHash))
+        if (-not $this.ComplexObjectsEqual((ConvertStringToHashtable $currentInstance.RoleDefinitions), $roleDefinitionsHash))
         {
             Write-Verbose "RoleDfinitions not equal: $($currentInstance.RoleDefinitions)"
             return $false
@@ -407,15 +407,15 @@ class JeaSessionConfiguration
         }
 
         # Check for null required groups
-        $requiredGroupsHash = $this.ConvertStringToHashtable($this.RequiredGroups)
+        $requiredGroupsHash = ConvertStringToHashtable($this.RequiredGroups)
 
-        if (-not $this.ComplexObjectsEqual($this.ConvertStringToHashtable($currentInstance.RequiredGroups), $requiredGroupsHash))
+        if (-not $this.ComplexObjectsEqual((ConvertStringToHashtable $currentInstance.RequiredGroups), $requiredGroupsHash))
         {
             Write-Verbose "RequiredGroups not equal: $(ConvertTo-Json $currentInstance.RequiredGroups -Depth 100)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual($this.ConvertStringToArrayOfObject($currentInstance.ModulesToImport), $this.ConvertStringToArrayOfObject($this.ModulesToImport)))
+        if (-not $this.ComplexObjectsEqual((ConvertStringToArrayOfObject $currentInstance.ModulesToImport), (ConvertStringToArrayOfObject $this.ModulesToImport)))
         {
             Write-Verbose "ModulesToImport not equal: $(ConvertTo-Json $currentInstance.ModulesToImport -Depth 100)"
             return $false
@@ -427,13 +427,13 @@ class JeaSessionConfiguration
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual($this.ConvertStringToArrayOfObject($currentInstance.VisibleCmdlets), $this.ConvertStringToArrayOfObject($this.VisibleCmdlets)))
+        if (-not $this.ComplexObjectsEqual((ConvertStringToArrayOfObject $currentInstance.VisibleCmdlets), (ConvertStringToArrayOfObject $this.VisibleCmdlets)))
         {
             Write-Verbose "VisibleCmdlets not equal: $(ConvertTo-Json $currentInstance.VisibleCmdlets -Depth 100)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual($this.ConvertStringToArrayOfObject($currentInstance.VisibleFunctions), $this.ConvertStringToArrayOfObject($this.VisibleFunctions)))
+        if (-not $this.ComplexObjectsEqual((ConvertStringToArrayOfObject $currentInstance.VisibleFunctions), (ConvertStringToArrayOfObject $this.VisibleFunctions)))
         {
             Write-Verbose "VisibleFunctions not equal: $(ConvertTo-Json $currentInstance.VisibleFunctions -Depth 100)"
             return $false
@@ -451,25 +451,25 @@ class JeaSessionConfiguration
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual($this.ConvertStringToArrayOfHashtable($currentInstance.AliasDefinitions), $this.ConvertStringToArrayOfHashtable($this.AliasDefinitions)))
+        if (-not $this.ComplexObjectsEqual((ConvertStringToArrayOfHashtable $currentInstance.AliasDefinitions), (ConvertStringToArrayOfHashtable $this.AliasDefinitions)))
         {
             Write-Verbose "AliasDefinitions not equal: $(ConvertTo-Json $currentInstance.AliasDefinitions -Depth 100)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual($this.ConvertStringToArrayOfHashtable($currentInstance.FunctionDefinitions), $this.ConvertStringToArrayOfHashtable($this.FunctionDefinitions)))
+        if (-not $this.ComplexObjectsEqual((ConvertStringToArrayOfHashtable $currentInstance.FunctionDefinitions), (ConvertStringToArrayOfHashtable $this.FunctionDefinitions)))
         {
             Write-Verbose "FunctionDefinitions not equal: $(ConvertTo-Json $currentInstance.FunctionDefinitions -Depth 100)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual($this.ConvertStringToArrayOfHashtable($currentInstance.VariableDefinitions), $this.ConvertStringToArrayOfHashtable($this.VariableDefinitions)))
+        if (-not $this.ComplexObjectsEqual((ConvertStringToArrayOfHashtable $currentInstance.VariableDefinitions), (ConvertStringToArrayOfHashtable$this.VariableDefinitions)))
         {
             Write-Verbose "VariableDefinitions not equal: $(ConvertTo-Json $currentInstance.VariableDefinitions -Depth 100)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual($this.ConvertStringToHashtable($currentInstance.EnvironmentVariables), $this.ConvertStringToHashtable($this.EnvironmentVariables)))
+        if (-not $this.ComplexObjectsEqual((ConvertStringToHashtable $currentInstance.EnvironmentVariables), (ConvertStringToHashtable $this.EnvironmentVariables)))
         {
             Write-Verbose "EnvironmentVariables not equal: $(ConvertTo-Json $currentInstance.EnvironmentVariables -Depth 100)"
             return $false
@@ -510,114 +510,6 @@ class JeaSessionConfiguration
         }
 
         return ($json1 -eq $json2)
-    }
-
-    ## Convert a string representing a Hashtable into a Hashtable
-    hidden [Hashtable] ConvertStringToHashtable($hashtableAsString)
-    {
-        if ($hashtableAsString -eq $null)
-        {
-            $hashtableAsString = '@{}'
-        }
-        $ast = [System.Management.Automation.Language.Parser]::ParseInput($hashtableAsString, [ref] $null, [ref] $null)
-        $data = $ast.Find( { $args[0] -is [System.Management.Automation.Language.HashtableAst] }, $false )
-
-        return [Hashtable] $data.SafeGetValue()
-    }
-
-    ## Convert a string representing an array of Hashtables
-    hidden [Hashtable[]] ConvertStringToArrayOfHashtable($literalString)
-    {
-        $items = @()
-
-        if ($literalString -eq $null)
-        {
-            return $items
-        }
-
-        # match single hashtable or array of hashtables
-        $predicate = {
-            param($ast)
-
-            if ($ast -is [System.Management.Automation.Language.HashtableAst])
-            {
-                return ($ast.Parent -is [System.Management.Automation.Language.ArrayLiteralAst]) -or `
-                       ($ast.Parent -is [System.Management.Automation.Language.CommandExpressionAst])
-            }
-
-            return $false
-        }
-
-        $rootAst = [System.Management.Automation.Language.Parser]::ParseInput($literalString, [ref] $null, [ref] $null)
-        $data = $rootAst.FindAll($predicate, $false)
-
-        foreach ($datum in $data)
-        {
-            $items += $datum.SafeGetValue()
-        }
-
-        return $items
-    }
-
-    ## Convert a string representing an array of strings or Hashtables into an array of objects
-    hidden [object[]] ConvertStringToArrayOfObject($literalString)
-    {
-        $items = @()
-
-        if ($literalString -eq $null)
-        {
-            return $items
-        }
-
-        # match:
-        # 1. single string
-        # 2. single hashtable
-        # 3. array of strings and/or hashtables
-        $predicate = {
-            param($ast)
-
-            if ($ast -is [System.Management.Automation.Language.HashtableAst])
-            {
-                # single hashtable or array item as hashtable
-                return ($ast.Parent -is [System.Management.Automation.Language.ArrayLiteralAst]) -or `
-                       ($ast.Parent -is [System.Management.Automation.Language.CommandExpressionAst])
-            }
-            elseif ($ast -is [System.Management.Automation.Language.StringConstantExpressionAst])
-            {
-                # array item as string
-                if ($ast.Parent -is [System.Management.Automation.Language.ArrayLiteralAst])
-                {
-                    return $true
-                }
-
-                do
-                {
-                    if ($ast.Parent -is [System.Management.Automation.Language.HashtableAst])
-                    {
-                        # string nested within a hashtable
-                        return $false
-                    }
-
-                    $ast = $ast.Parent
-                }
-                while( $ast -ne $null )
-
-                # single string
-                return $true
-            }
-
-            return $false
-        }
-
-        $rootAst = [System.Management.Automation.Language.Parser]::ParseInput($literalString, [ref] $null, [ref] $null)
-        $data = $rootAst.FindAll($predicate, $false)
-
-        foreach ($datum in $data)
-        {
-            $items += $datum.SafeGetValue()
-        }
-
-        return $items
     }
 
     ## Get a PS Session Configuration based on its name

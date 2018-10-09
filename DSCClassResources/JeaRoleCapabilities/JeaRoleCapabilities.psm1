@@ -18,7 +18,7 @@ class JeaRoleCapabilities {
     # By default, all of the commands in listed modules are visible. When used with VisibleCmdlets or VisibleFunctions,
     # the commands visible from the specified modules can be restricted. Hashtable with keys ModuleName, ModuleVersion and GUID.
     [DscProperty()]
-    [Hashtable]$ModulesToImport
+    [string[]]$ModulesToImport
 
     # Limits the aliases in the session to those aliases specified in the value of this parameter,
     # plus any aliases that you define in the AliasDefinition parameter. Wildcard characters are supported.
@@ -49,32 +49,32 @@ class JeaRoleCapabilities {
 
     # Specifies scripts to add to sessions that use the role capability file.
     [DscProperty()]
-    [Hashtable]$ScriptsToProcess
+    [string[]]$ScriptsToProcess
 
     # Adds the specified aliases to sessions that use the role capability file.
     # Hashtable with keys Name, Value, Description and Options.
     [DscProperty()]
-    [Hashtable]$AliasDefinitions
+    [string[]]$AliasDefinitions
 
     # Adds the specified functions to sessions that expose the role capability.
     # Hashtable with keys Name, Scriptblock and Options.
     [DscProperty()]
-    [Hashtable]$FunctionDefinitions
+    [string[]]$FunctionDefinitions
 
     # Specifies variables to add to sessions that use the role capability file.
     # Hashtable with keys Name, Value, Options.
     [DscProperty()]
-    [Hashtable]$VariableDefinitions
+    [string[]]$VariableDefinitions
 
     # Specifies the environment variables for sessions that expose this role capability file.
     # Hashtable of environment variables.
     [DscProperty()]
-    [Hashtable]$EnvironmentVariables
+    [string[]]$EnvironmentVariables
 
     # Specifies type files (.ps1xml) to add to sessions that use the role capability file.
     # The value of this parameter must be a full or absolute path of the type file names.
     [DscProperty()]
-    [Hashtable]$TypesToProcess
+    [string[]]$TypesToProcess
 
     # Specifies the formatting files (.ps1xml) that run in sessions that use the role capability file.
     # The value of this parameter must be a full or absolute path of the formatting files.
@@ -85,16 +85,7 @@ class JeaRoleCapabilities {
     [DscProperty()]
     [String[]]$AssembliesToLoad
 
-    Hidden [Hashtable] ConvertToHashtable() {
-        $Parameters = @{}
-        foreach ($Parameter in $this.PSObject.Properties.Where({$_.Value})) {
-            $Parameters.Add($Parameter.Name,$Parameter.Value)
-        }
-
-        return $Parameters
-    }
-
-    Hidden [Boolean] ValidatePath() {
+        Hidden [Boolean] ValidatePath() {
         $FileObject = [System.IO.FileInfo]::new($this.Path)
         if ($FileObject.Extension -ne '.psrc') {
             return $false
@@ -114,6 +105,11 @@ class JeaRoleCapabilities {
     [JeaRoleCapabilities] Get() {
         if (Test-Path -Path $this.Path) {
             $CurrentState = Import-PowerShellDataFile -Path $this.Path
+
+            'Copyright','GUID','Author','CompanyName' | Foreach-Object {
+                $CurrentState.Remove($_)
+            }
+
             foreach ($Property in $CurrentState.Keys) {
                 $this.$Property = $CurrentState[$Property]
             }
@@ -128,9 +124,12 @@ class JeaRoleCapabilities {
     [void] Set() {
         if ($this.Ensure -eq [Ensure]::Present) {
 
-            $Parameters = $this.ConvertToHashtable()
+            $Parameters = ConvertObjectToHashtable($this)
             $Parameters.Remove('Ensure')
 
+            Foreach ($Parameter in $Parameters.Keys.Where({$Parameters[$_] -match '@{'})) {
+                $Parameters[$Parameter] = ConvertStringToArrayOfHashtable $Parameters[$Parameter]
+            }
             $null = New-Item -Path $this.Path -ItemType File -Force
 
             New-PSRoleCapabilityFile @Parameters
@@ -152,8 +151,8 @@ class JeaRoleCapabilities {
         elseif ($this.Ensure -eq [Ensure]::Present -and (Test-Path -Path $this.Path)) {
             $CurrentState = $this.Get()
 
-            $Parameters = $this.ConvertToHashtable()
-            $Compare = FindMismatchedHashtableValue -ActualValue $CurrentState -ExpectedValue $Parameters
+            $Parameters = ConvertObjectToHashtable($this)
+            $Compare = Compare-Hashtable -ActualValue $CurrentState -ExpectedValue $Parameters
 
             if ($null-eq $Compare) {
                 return $true
