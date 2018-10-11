@@ -1,5 +1,5 @@
 ## Convert a string representing a Hashtable into a Hashtable
-Function ConvertStringToHashtable($hashtableAsString)
+Function Convert-StringToHashtable($hashtableAsString)
 {
     if ($hashtableAsString -eq $null)
     {
@@ -12,7 +12,7 @@ Function ConvertStringToHashtable($hashtableAsString)
 }
 
 ## Convert a string representing an array of Hashtables
-Function ConvertStringToArrayOfHashtable($literalString)
+Function Convert-StringToArrayOfHashtable($literalString)
 {
     $items = @()
 
@@ -46,7 +46,7 @@ Function ConvertStringToArrayOfHashtable($literalString)
 }
 
 ## Convert a string representing an array of strings or Hashtables into an array of objects
-Function ConvertStringToArrayOfObject($literalString)
+Function Convert-StringToArrayOfObject($literalString)
 {
     $items = @()
 
@@ -106,11 +106,38 @@ Function ConvertStringToArrayOfObject($literalString)
     return $items
 }
 
-Function ConvertObjectToHashtable($object) {
+Function Convert-ObjectToHashtable($object) {
     $Parameters = @{}
     foreach ($Parameter in $object.PSObject.Properties.Where({$_.Value})) {
         $Parameters.Add($Parameter.Name,$Parameter.Value)
     }
 
     return $Parameters
+}
+
+
+function Compare-Hashtable($ActualValue, $ExpectedValue) {
+    # Based on FindMisMatchedHashtableValue by Stuart Leeks
+    # https://github.com/stuartleeks/PesterMatchHashtable
+    foreach($expectedKey in $ExpectedValue.Keys) {
+        if (-not($ActualValue.Keys -contains $expectedKey)){
+            return "Expected key: {$expectedKey}, but missing in actual"
+        }
+        $expectedItem = $ExpectedValue[$expectedKey]
+        $actualItem = $ActualValue[$expectedKey]
+        if (-not ($actualItem -eq $expectedItem)) {
+            return "Value differs for key {$expectedKey}. Expected value: {$expectedItem}, actual value: {$actualItem}"
+        }
+    }
+
+    foreach($actualKey in $ActualValue.Keys) {
+        if (-not($ExpectedValue.Keys -contains $actualKey)){
+            return "Actual key: {$actualKey}, but missing in expected"
+        }
+        $expectedItem = $ExpectedValue[$actualKey]
+        $actualItem = $ActualValue[$actualKey]
+        if (-not ($actualItem -eq $expectedItem)) {
+            return "Value differs for key {$actualKey}. Expected value: {$expectedItem}, actual value: {$actualItem}"
+        }
+    }
 }

@@ -124,11 +124,11 @@ class JeaRoleCapabilities {
     [void] Set() {
         if ($this.Ensure -eq [Ensure]::Present) {
 
-            $Parameters = ConvertObjectToHashtable($this)
+            $Parameters = Convert-ObjectToHashtable($this)
             $Parameters.Remove('Ensure')
 
             Foreach ($Parameter in $Parameters.Keys.Where({$Parameters[$_] -match '@{'})) {
-                $Parameters[$Parameter] = ConvertStringToArrayOfHashtable $Parameters[$Parameter]
+                $Parameters[$Parameter] = Convert-StringToArrayOfHashtable $Parameters[$Parameter]
             }
             $null = New-Item -Path $this.Path -ItemType File -Force
 
@@ -151,7 +151,7 @@ class JeaRoleCapabilities {
         elseif ($this.Ensure -eq [Ensure]::Present -and (Test-Path -Path $this.Path)) {
             $CurrentState = $this.Get()
 
-            $Parameters = ConvertObjectToHashtable($this)
+            $Parameters = Convert-ObjectToHashtable($this)
             $Compare = Compare-Hashtable -ActualValue $CurrentState -ExpectedValue $Parameters
 
             if ($null-eq $Compare) {
@@ -171,29 +171,3 @@ class JeaRoleCapabilities {
         return $false
     }
  }
-
- function Compare-Hashtable($ActualValue, $ExpectedValue) {
-    # Based on FindMisMatchedHashtableValue by Stuart Leeks
-    # https://github.com/stuartleeks/PesterMatchHashtable
-    foreach($expectedKey in $ExpectedValue.Keys) {
-        if (-not($ActualValue.Keys -contains $expectedKey)){
-            return "Expected key: {$expectedKey}, but missing in actual"
-        }
-        $expectedItem = $ExpectedValue[$expectedKey]
-        $actualItem = $ActualValue[$expectedKey]
-        if (-not ($actualItem -eq $expectedItem)) {
-            return "Value differs for key {$expectedKey}. Expected value: {$expectedItem}, actual value: {$actualItem}"
-        }
-    }
-
-    foreach($actualKey in $ActualValue.Keys) {
-        if (-not($ExpectedValue.Keys -contains $actualKey)){
-            return "Actual key: {$actualKey}, but missing in expected"
-        }
-        $expectedItem = $ExpectedValue[$actualKey]
-        $actualItem = $ActualValue[$actualKey]
-        if (-not ($actualItem -eq $expectedItem)) {
-            return "Value differs for key {$actualKey}. Expected value: {$expectedItem}, actual value: {$actualItem}"
-        }
-    }
-}

@@ -146,8 +146,8 @@ class JeaSessionConfiguration
                 throw "The RunAsVirtualAccountGroups setting can not be used when a configuration is set to run as a Group Managed Service Account"
             }
 
-            ## Convert the RoleDefinitions string to the actual Hashtable
-            $configurationFileArguments["RoleDefinitions"] = ConvertStringToHashtable($this.RoleDefinitions)
+            ## Convert- the RoleDefinitions string to the actual Hashtable
+            $configurationFileArguments["RoleDefinitions"] = Convert-StringToHashtable($this.RoleDefinitions)
 
             ## Set up the JEA identity
             if ($this.RunAsVirtualAccountGroups)
@@ -193,14 +193,14 @@ class JeaSessionConfiguration
             if ($this.RequiredGroups)
             {
                 ## Convert the RequiredGroups string to the actual Hashtable
-                $requiredGroupsHash = ConvertStringToHashtable($this.RequiredGroups)
+                $requiredGroupsHash = Convert-StringToHashtable($this.RequiredGroups)
                 $configurationFileArguments["RequiredGroups"] = $requiredGroupsHash
             }
 
             ## Modules to import
             if ($this.ModulesToImport)
             {
-                $configurationFileArguments["ModulesToImport"] = ConvertStringToArrayOfObject($this.ModulesToImport)
+                $configurationFileArguments["ModulesToImport"] = Convert-StringToArrayOfObject($this.ModulesToImport)
             }
 
             ## Visible aliases
@@ -212,13 +212,13 @@ class JeaSessionConfiguration
             ## Visible cmdlets
             if ($this.VisibleCmdlets)
             {
-                $configurationFileArguments["VisibleCmdlets"] = ConvertStringToArrayOfObject($this.VisibleCmdlets)
+                $configurationFileArguments["VisibleCmdlets"] = Convert-StringToArrayOfObject($this.VisibleCmdlets)
             }
 
             ## Visible functions
             if ($this.VisibleFunctions)
             {
-                $configurationFileArguments["VisibleFunctions"] = ConvertStringToArrayOfObject($this.VisibleFunctions)
+                $configurationFileArguments["VisibleFunctions"] = Convert-StringToArrayOfObject($this.VisibleFunctions)
             }
 
             ## Visible external commands
@@ -242,25 +242,25 @@ class JeaSessionConfiguration
             ## Alias definitions
             if ($this.AliasDefinitions)
             {
-                $configurationFileArguments["AliasDefinitions"] = ConvertStringToArrayOfHashtable($this.AliasDefinitions)
+                $configurationFileArguments["AliasDefinitions"] = Convert-StringToArrayOfHashtable($this.AliasDefinitions)
             }
 
             ## Function definitions
             if ($this.FunctionDefinitions)
             {
-                $configurationFileArguments["FunctionDefinitions"] = ConvertStringToArrayOfHashtable($this.FunctionDefinitions)
+                $configurationFileArguments["FunctionDefinitions"] = Convert-StringToArrayOfHashtable($this.FunctionDefinitions)
             }
 
             ## Variable definitions
             if ($this.VariableDefinitions)
             {
-                $configurationFileArguments["VariableDefinitions"] = ConvertStringToArrayOfHashtable($this.VariableDefinitions)
+                $configurationFileArguments["VariableDefinitions"] = Convert-StringToArrayOfHashtable($this.VariableDefinitions)
             }
 
             ## Environment variables
             if ($this.EnvironmentVariables)
             {
-                $configurationFileArguments["EnvironmentVariables"] = ConvertStringToHashtable($this.EnvironmentVariables)
+                $configurationFileArguments["EnvironmentVariables"] = Convert-StringToHashtable($this.EnvironmentVariables)
             }
 
             ## Types to process
@@ -359,9 +359,9 @@ class JeaSessionConfiguration
         }
 
         ## Convert the RoleDefinitions string to the actual Hashtable
-        $roleDefinitionsHash = ConvertStringToHashtable($this.RoleDefinitions)
+        $roleDefinitionsHash = Convert-StringToHashtable($this.RoleDefinitions)
 
-        if (-not $this.ComplexObjectsEqual((ConvertStringToHashtable $currentInstance.RoleDefinitions), $roleDefinitionsHash))
+        if (-not $this.ComplexObjectsEqual((Convert-StringToHashtable $currentInstance.RoleDefinitions), $roleDefinitionsHash))
         {
             Write-Verbose "RoleDfinitions not equal: $($currentInstance.RoleDefinitions)"
             return $false
@@ -407,15 +407,15 @@ class JeaSessionConfiguration
         }
 
         # Check for null required groups
-        $requiredGroupsHash = ConvertStringToHashtable($this.RequiredGroups)
+        $requiredGroupsHash = Convert-StringToHashtable($this.RequiredGroups)
 
-        if (-not $this.ComplexObjectsEqual((ConvertStringToHashtable $currentInstance.RequiredGroups), $requiredGroupsHash))
+        if (-not $this.ComplexObjectsEqual((Convert-StringToHashtable $currentInstance.RequiredGroups), $requiredGroupsHash))
         {
             Write-Verbose "RequiredGroups not equal: $(ConvertTo-Json $currentInstance.RequiredGroups -Depth 100)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual((ConvertStringToArrayOfObject $currentInstance.ModulesToImport), (ConvertStringToArrayOfObject $this.ModulesToImport)))
+        if (-not $this.ComplexObjectsEqual((Convert-StringToArrayOfObject $currentInstance.ModulesToImport), (Convert-StringToArrayOfObject $this.ModulesToImport)))
         {
             Write-Verbose "ModulesToImport not equal: $(ConvertTo-Json $currentInstance.ModulesToImport -Depth 100)"
             return $false
@@ -427,13 +427,13 @@ class JeaSessionConfiguration
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual((ConvertStringToArrayOfObject $currentInstance.VisibleCmdlets), (ConvertStringToArrayOfObject $this.VisibleCmdlets)))
+        if (-not $this.ComplexObjectsEqual((Convert-StringToArrayOfObject $currentInstance.VisibleCmdlets), (Convert-StringToArrayOfObject $this.VisibleCmdlets)))
         {
             Write-Verbose "VisibleCmdlets not equal: $(ConvertTo-Json $currentInstance.VisibleCmdlets -Depth 100)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual((ConvertStringToArrayOfObject $currentInstance.VisibleFunctions), (ConvertStringToArrayOfObject $this.VisibleFunctions)))
+        if (-not $this.ComplexObjectsEqual((Convert-StringToArrayOfObject $currentInstance.VisibleFunctions), (Convert-StringToArrayOfObject $this.VisibleFunctions)))
         {
             Write-Verbose "VisibleFunctions not equal: $(ConvertTo-Json $currentInstance.VisibleFunctions -Depth 100)"
             return $false
@@ -451,25 +451,25 @@ class JeaSessionConfiguration
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual((ConvertStringToArrayOfHashtable $currentInstance.AliasDefinitions), (ConvertStringToArrayOfHashtable $this.AliasDefinitions)))
+        if (-not $this.ComplexObjectsEqual((Convert-StringToArrayOfHashtable $currentInstance.AliasDefinitions), (Convert-StringToArrayOfHashtable $this.AliasDefinitions)))
         {
             Write-Verbose "AliasDefinitions not equal: $(ConvertTo-Json $currentInstance.AliasDefinitions -Depth 100)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual((ConvertStringToArrayOfHashtable $currentInstance.FunctionDefinitions), (ConvertStringToArrayOfHashtable $this.FunctionDefinitions)))
+        if (-not $this.ComplexObjectsEqual((Convert-StringToArrayOfHashtable $currentInstance.FunctionDefinitions), (Convert-StringToArrayOfHashtable $this.FunctionDefinitions)))
         {
             Write-Verbose "FunctionDefinitions not equal: $(ConvertTo-Json $currentInstance.FunctionDefinitions -Depth 100)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual((ConvertStringToArrayOfHashtable $currentInstance.VariableDefinitions), (ConvertStringToArrayOfHashtable$this.VariableDefinitions)))
+        if (-not $this.ComplexObjectsEqual((Convert-StringToArrayOfHashtable $currentInstance.VariableDefinitions), (Convert-StringToArrayOfHashtable$this.VariableDefinitions)))
         {
             Write-Verbose "VariableDefinitions not equal: $(ConvertTo-Json $currentInstance.VariableDefinitions -Depth 100)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual((ConvertStringToHashtable $currentInstance.EnvironmentVariables), (ConvertStringToHashtable $this.EnvironmentVariables)))
+        if (-not $this.ComplexObjectsEqual((Convert-StringToHashtable $currentInstance.EnvironmentVariables), (Convert-StringToHashtable $this.EnvironmentVariables)))
         {
             Write-Verbose "EnvironmentVariables not equal: $(ConvertTo-Json $currentInstance.EnvironmentVariables -Depth 100)"
             return $false
