@@ -308,15 +308,6 @@ class JeaSessionConfiguration
                 ## Register the configuration file
                 $this.RegisterPSSessionConfiguration($this.EndpointName, $psscPath, $this.HungRegistrationTimeout)
 
-                ## Enable PowerShell logging on the system
-                $basePath = "HKLM:\Software\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging"
-
-                if (-not (Test-Path $basePath))
-                {
-                    $null = New-Item $basePath -Force
-                }
-
-                Set-ItemProperty $basePath -Name EnableScriptBlockLogging -Value "1"
             }
         }
         finally

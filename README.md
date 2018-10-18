@@ -12,7 +12,7 @@ In addition to making the documentation easier to find and read, you can now [co
 
 ## DSC Resource
 The [JEA DSC resource](./DSC%20Resource) can help you quickly and consistently deploy JEA endpoints across your enterprise.
-The *JustEnoughAdministration* DSC resource configures the PowerShell session configurations, which define the mapping of users to roles and general session security settings.
+The *JustEnoughAdministration* DSC resource configures the PowerShell session configurations, which define the mapping of users to roles and general session security settings. *Note:* Scriptblock logging is not enabled by this resource and should be done using the [registry resource](https://docs.microsoft.com/en-us/powershell/dsc/registryresource).
 Role capabilities belong to standard PowerShell modules, and can be deployed with the DSC [file resource](https://msdn.microsoft.com/en-us/PowerShell/DSC/fileResource).
 Check out the [Demo Config](./DSC%20Resource/DemoConfig.ps1) for an example of how to deploy a JEA endpoint using these DSC resources.
 
