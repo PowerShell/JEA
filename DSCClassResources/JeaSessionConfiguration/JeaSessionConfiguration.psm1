@@ -500,8 +500,14 @@ class JeaSessionConfiguration
     ## We don't need anything extensive, as we should be the only ones changing them.
     hidden [bool] ComplexObjectsEqual($object1, $object2)
     {
-        $json1 = ConvertTo-Json -InputObject $object1 -Depth 100
-        $json2 = ConvertTo-Json -InputObject $object2 -Depth 100
+        $object1ordered=[System.Collections.Specialized.OrderedDictionary]@{}
+        $object1.Keys | Sort-Object -Descending | ForEach-Object {$object1ordered.Insert(0,$_,$object1["$_"])}
+
+        $object2ordered=[System.Collections.Specialized.OrderedDictionary]@{}
+        $object2.Keys | Sort-Object -Descending | ForEach-Object {$object2ordered.Insert(0,$_,$object2["$_"])}
+
+        $json1 = ConvertTo-Json -InputObject $object1ordered -Depth 100
+        $json2 = ConvertTo-Json -InputObject $object2ordered -Depth 100
 
         if ($json1 -ne $json2)
         {
