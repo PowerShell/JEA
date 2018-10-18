@@ -11,9 +11,9 @@ JEA documentation has moved to MSDN -- check it out at [http://aka.ms/JEAdocs](h
 In addition to making the documentation easier to find and read, you can now [contribute to the documentation](https://github.com/PowerShell/PowerShell-Docs/blob/staging/CONTRIBUTING.md) by submitting pull requests to the *staging* branch.
 
 ## DSC Resource
-The [JEA DSC resource](./DSC%20Resource) can help you quickly and consistently deploy JEA endpoints across your enterprise.
-The *JustEnoughAdministration* DSC resource configures the PowerShell session configurations, which define the mapping of users to roles and general session security settings. *Note:* Scriptblock logging is not enabled by this resource and should be done using the [registry resource](https://docs.microsoft.com/en-us/powershell/dsc/registryresource).
-Role capabilities belong to standard PowerShell modules, and can be deployed with the DSC [file resource](https://msdn.microsoft.com/en-us/PowerShell/DSC/fileResource).
+The [JEA DSC resource](./DSCClassResources) can help you quickly and consistently deploy JEA endpoints across your enterprise.
+The *JeaSessionConfiguration* DSC resource configures the PowerShell session configurations, which define the mapping of users to roles and general session security settings. *Note:* Scriptblock logging is not enabled by this resource and should be done using the [registry resource](https://docs.microsoft.com/en-us/powershell/dsc/registryresource).
+The *JeaRoleCapabilities* DSC resource creates the Role Capabilities file in the specified location using the specified settings.
 Check out the [Demo Config](./DSC%20Resource/DemoConfig.ps1) for an example of how to deploy a JEA endpoint using these DSC resources.
 
 ## Sample Role Capabilities
