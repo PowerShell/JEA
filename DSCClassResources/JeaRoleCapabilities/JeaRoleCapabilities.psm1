@@ -171,3 +171,20 @@ class JeaRoleCapabilities {
         return $false
     }
  }
+
+ function Convert-StringToObject {
+     param (
+         [string]$InputString
+     )
+
+    $ast = [System.Management.Automation.Language.Parser]::ParseInput($InputString, [ref] $null, [ref] $null)
+    $Data = $ast.Find( { $args[0] -is [System.Management.Automation.Language.ArrayLiteralAst] }, $false )
+    foreach ($Element in $Data.Elements){
+        if ($Element.StaticType.Name -eq 'String'){
+            $Element.value
+        }
+        if ($Element.StaticType.Name -eq 'Hashtable'){
+            [Hashtable]$Element.SafeGetValue()
+        }
+    }
+ }
