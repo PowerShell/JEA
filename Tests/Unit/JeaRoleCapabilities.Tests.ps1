@@ -29,7 +29,7 @@ Describe "Testing JeaRoleCapabilities" {
             }
 
             It "Should return a single string when passed only one cmdlet" {
-                $Output = Convert-StringToObject -InputString "'Invoke-Cmdlet'"
+                $Output = Convert-StringToObject -InputString "Invoke-Cmdlet"
 
                 $Output | Should -Be "Invoke-Cmdlet"
             }
