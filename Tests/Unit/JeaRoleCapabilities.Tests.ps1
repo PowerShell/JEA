@@ -20,7 +20,7 @@ Describe "Testing JeaRoleCapabilities" {
                 $Output.Count | Should -Be 2
                 $Output[0] | Should -BeOfType [Hashtable]
                 $Output[0].Name | Should -Be 'Invoke-Cmdlet'
-                ,$Output[0].Parameters | Should -BeOfType [Array]
+                $Output[0].Parameters.GetType().Name | Should -Be 'Object[]'
                 $Output[0].Parameters[0] | Should -BeOfType [Hashtable]
                 $Output[0].Parameters[1] | Should -BeOfType [Hashtable]
                 $Output[0].Parameters[0].Name | Should -Be 'Parameter1'
@@ -52,6 +52,21 @@ Describe "Testing JeaRoleCapabilities" {
                 $null = Convert-StringToObject -InputString "`$(New-Item File.txt),'Invoke-Cmdlet'"
 
                 Assert-MockCalled -CommandName New-Item -Times 0 -Scope It
+            }
+
+            It "Should return a single hashtable when passed one with multiple nested properties." {
+                $Output = Convert-StringToObject -InputString "@{Name = 'Invoke-Cmdlet'; Parameters = @{Name = 'Parameter1';Value = 'Value1'},@{Name = 'Parameter2'; Value = 'Value2'}}"
+
+                $Output | Should -BeOfType [Hashtable]
+                $Output.Parameters.GetType().Name | Should -Be 'Object[]'
+                $Output.Parameters[0].Name | Should -Be 'Parameter1'
+                $Output.Parameters[0].Value | Should -Be 'Value1'
+                $Output.Parameters[1].Name | Should -Be 'Parameter2'
+                $Output.Parameters[1].Value | Should -Be 'Value2'
+            }
+
+            It "Should write an error when not provided with a hashtable, string or combination" {
+                {$Output = Convert-StringToObject -InputString "`$(Get-Help)" -ErrorAction Stop} | Should -Throw
             }
         }
     }
