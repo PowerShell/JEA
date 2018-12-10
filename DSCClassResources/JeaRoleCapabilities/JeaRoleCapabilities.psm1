@@ -85,7 +85,7 @@ class JeaRoleCapabilities {
     [DscProperty()]
     [String[]]$AssembliesToLoad
 
-        Hidden [Boolean] ValidatePath() {
+    Hidden [Boolean] ValidatePath() {
         $FileObject = [System.IO.FileInfo]::new($this.Path)
         if ($FileObject.Extension -ne '.psrc') {
             return $false
@@ -103,22 +103,24 @@ class JeaRoleCapabilities {
     }
 
     [JeaRoleCapabilities] Get() {
+        $CurrentState = [JeaRoleCapabilities]::new()
+        $CurrentState.Path = $this.Path
         if (Test-Path -Path $this.Path) {
-            $CurrentState = Import-PowerShellDataFile -Path $this.Path
+            $CurrentStateFile = Import-PowerShellDataFile -Path $this.Path
 
             'Copyright','GUID','Author','CompanyName' | Foreach-Object {
-                $CurrentState.Remove($_)
+                $CurrentStateFile.Remove($_)
             }
 
-            foreach ($Property in $CurrentState.Keys) {
-                $this.$Property = $CurrentState[$Property]
+            foreach ($Property in $CurrentStateFile.Keys) {
+                $CurrentState.$Property = $CurrentStateFile[$Property]
             }
-            $this.Ensure = [Ensure]::Present
+            $CurrentState.Ensure = [Ensure]::Present
         }
         else {
-            $this.Ensure = [Ensure]::Absent
+            $CurrentState.Ensure = [Ensure]::Absent
         }
-        return $this
+        return $CurrentState
     }
 
     [void] Set() {
