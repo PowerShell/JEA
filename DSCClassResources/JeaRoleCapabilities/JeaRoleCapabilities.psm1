@@ -151,9 +151,9 @@ class JeaRoleCapabilities {
             return $false
         }
         elseif ($this.Ensure -eq [Ensure]::Present -and (Test-Path -Path $this.Path)) {
-            $CurrentState = $this.Get()
+            $CurrentState = Convert-ObjectToHashtable -Object $this.Get()
 
-            $Parameters = Convert-ObjectToHashtable($this)
+            $Parameters = Convert-ObjectToHashtable -Object $this
             $Compare = Compare-Hashtable -ActualValue $CurrentState -ExpectedValue $Parameters
 
             if ($null-eq $Compare) {
