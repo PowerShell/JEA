@@ -177,7 +177,7 @@ class JeaRoleCapabilities {
 function Convert-StringToObject {
     [cmdletbinding()]
     param (
-        [string]$InputString
+        [string[]]$InputString
     )
 
     $ParseErrors = @()
@@ -187,27 +187,29 @@ function Convert-StringToObject {
         # Use Ast.Find() to locate the CommandAst parsed from our fake command
         $CmdAst = $AST.Find({param($ChildAst) $ChildAst -is [System.Management.Automation.Language.CommandAst]},$false)
         # Grab the user-supplied arguments (index 0 is the command name, 1 is our fake parameter)
-        $ArgumentAst = $CmdAst.CommandElements[2]
-        if($ArgumentAst -is [System.Management.Automation.Language.ArrayLiteralAst]) {
-            # Argument was a list
-            foreach ($Element in $ArgumentAst.Elements){
-                if ($Element.StaticType.Name -eq 'String'){
-                    $Element.value
+        $AllArgumentAst = $CmdAst.CommandElements[2, ($CmdAst.CommandElements.Count)]
+        foreach ($ArgumentAst in $AllArgumentAst) {
+            if($ArgumentAst -is [System.Management.Automation.Language.ArrayLiteralAst]) {
+                # Argument was a list
+                foreach ($Element in $ArgumentAst.Elements){
+                    if ($Element.StaticType.Name -eq 'String'){
+                        $Element.value
+                    }
+                    if ($Element.StaticType.Name -eq 'Hashtable'){
+                        [Hashtable]$Element.SafeGetValue()
+                    }
                 }
-                if ($Element.StaticType.Name -eq 'Hashtable'){
-                    [Hashtable]$Element.SafeGetValue()
-                }
-            }
-        }
-        else {
-            if ($ArgumentAst -is [System.Management.Automation.Language.HashtableAst]) {
-                [Hashtable]$ArgumentAst.SafeGetValue()
-            }
-            elseif ($ArgumentAst -is [System.Management.Automation.Language.StringConstantExpressionAst]) {
-                $InputString
             }
             else {
-                Write-Error -Message "Input was not a valid hashtable, string or collection of both. Please check the contents and try again."
+                if ($ArgumentAst -is [System.Management.Automation.Language.HashtableAst]) {
+                    [Hashtable]$ArgumentAst.SafeGetValue()
+                }
+                elseif ($ArgumentAst -is [System.Management.Automation.Language.StringConstantExpressionAst]) {
+                    $InputString
+                }
+                else {
+                    Write-Error -Message "Input was not a valid hashtable, string or collection of both. Please check the contents and try again."
+                }
             }
         }
     }
