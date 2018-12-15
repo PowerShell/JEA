@@ -1,3 +1,4 @@
+using namespace System.Management.Automation.Language
 enum Ensure
 {
     Present
@@ -182,14 +183,14 @@ function Convert-StringToObject {
 
     $ParseErrors = @()
     $FakeCommand = "Totally-NotACmdlet -FakeParameter $InputString"
-    $AST = [System.Management.Automation.Language.Parser]::ParseInput($FakeCommand,[ref]$null,[ref]$ParseErrors)
+    $AST = [Parser]::ParseInput($FakeCommand,[ref]$null,[ref]$ParseErrors)
     if(-not $ParseErrors){
         # Use Ast.Find() to locate the CommandAst parsed from our fake command
-        $CmdAst = $AST.Find({param($ChildAst) $ChildAst -is [System.Management.Automation.Language.CommandAst]},$false)
+        $CmdAst = $AST.Find({param($ChildAst) $ChildAst -is [CommandAst]},$false)
         # Grab the user-supplied arguments (index 0 is the command name, 1 is our fake parameter)
-        $AllArgumentAst = $CmdAst.CommandElements[2, ($CmdAst.CommandElements.Count)]
+        $AllArgumentAst = $CmdAst.CommandElements.Where({$_ -isnot [CommandParameterAst] -and $_.Value -ne 'Totally-NotACmdlet'})
         foreach ($ArgumentAst in $AllArgumentAst) {
-            if($ArgumentAst -is [System.Management.Automation.Language.ArrayLiteralAst]) {
+            if($ArgumentAst -is [ArrayLiteralAst]) {
                 # Argument was a list
                 foreach ($Element in $ArgumentAst.Elements){
                     if ($Element.StaticType.Name -eq 'String'){
@@ -201,11 +202,11 @@ function Convert-StringToObject {
                 }
             }
             else {
-                if ($ArgumentAst -is [System.Management.Automation.Language.HashtableAst]) {
+                if ($ArgumentAst -is [HashtableAst]) {
                     [Hashtable]$ArgumentAst.SafeGetValue()
                 }
-                elseif ($ArgumentAst -is [System.Management.Automation.Language.StringConstantExpressionAst]) {
-                    $InputString
+                elseif ($ArgumentAst -is [StringConstantExpressionAst]) {
+                    $ArgumentAst.Value
                 }
                 else {
                     Write-Error -Message "Input was not a valid hashtable, string or collection of both. Please check the contents and try again."
