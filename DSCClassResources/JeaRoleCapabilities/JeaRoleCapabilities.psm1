@@ -126,7 +126,7 @@ class JeaRoleCapabilities {
 
     [void] Set() {
         if ($this.Ensure -eq [Ensure]::Present) {
-            #Wait-Debugger
+
             $Parameters = Convert-ObjectToHashtable($this)
             $Parameters.Remove('Ensure')
 
