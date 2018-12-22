@@ -126,7 +126,7 @@ class JeaRoleCapabilities {
 
     [void] Set() {
         if ($this.Ensure -eq [Ensure]::Present) {
-
+            #Wait-Debugger
             $Parameters = Convert-ObjectToHashtable($this)
             $Parameters.Remove('Ensure')
 
@@ -203,7 +203,24 @@ function Convert-StringToObject {
             }
             else {
                 if ($ArgumentAst -is [HashtableAst]) {
-                    [Hashtable]$ArgumentAst.SafeGetValue()
+                    $ht = [Hashtable]$ArgumentAst.SafeGetValue()
+                    for ($i = 1; $i -lt $ht.Keys.Count; $i++)
+                    {
+                        $value = $ht[([array]$ht.Keys)[$i]]
+                        if ($value -is [scriptblock]) {
+
+                            $scriptBlockText = $value.Ast.Extent.Text
+
+                            if ($scriptBlockText[$value.Ast.Extent.StartOffset] -eq '{' -and $scriptBlockText[$endOffset - 1] -eq '}') {
+
+                                $scriptBlockText = $scriptBlockText.Substring(0, $scriptBlockText.Length - 1)
+                                $scriptBlockText = $scriptBlockText.Substring(1, $scriptBlockText.Length - 1)
+                            }
+
+                            $ht[([array]$ht.Keys)[$i]] = [scriptblock]::Create($scriptBlockText)
+                        }
+                    }
+                    $ht
                 }
                 elseif ($ArgumentAst -is [StringConstantExpressionAst]) {
                     $ArgumentAst.Value
