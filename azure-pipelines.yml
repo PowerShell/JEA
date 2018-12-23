@@ -1,0 +1,40 @@
+resources:
+- repo: self
+queue:
+  name: Hosted VS2017
+
+steps:
+- task: gittools.gitversion.gitversion-task.GitVersion@4
+  displayName: GitVersion
+  inputs:
+    preferBundledVersion: false
+
+- task: richardfennellBM.BM-VSTS-PesterRunner-Task.Pester-Task.Pester@8
+  displayName: 'Pester Test Runner'
+  inputs:
+    CodeCoverageOutputFile: '$(System.DefaultWorkingDirectory)\Coverage-Pester.XML'
+    Excludetag: Integration
+    CodeCoverageFolder: '$(System.DefaultWorkingDirectory)'
+
+- task: PublishTestResults@2
+  displayName: 'Publish Test Results'
+  inputs:
+    testResultsFormat: NUnit
+    testResultsFiles: '$(System.DefaultWorkingDirectory)\Test-Pester.XML'
+
+- task: PublishCodeCoverageResults@1
+  displayName: 'Publish code coverage from $(System.DefaultWorkingDirectory)\Coverage-Pester.XML'
+  inputs:
+    summaryFileLocation: '$(System.DefaultWorkingDirectory)\Coverage-Pester.XML'
+
+- task: CopyFiles@2
+  displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)'
+  inputs:
+    SourceFolder: '$(System.DefaultWorkingDirectory)'
+    Contents: |
+     **
+     !.git*
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: drop'
