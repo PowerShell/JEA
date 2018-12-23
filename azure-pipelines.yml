@@ -25,12 +25,14 @@ steps:
 
 - task: PublishTestResults@2
   displayName: 'Publish Test Results'
+  condition: succeededOrFailed()
   inputs:
     testResultsFormat: NUnit
     testResultsFiles: '$(System.DefaultWorkingDirectory)\Test-Pester.XML'
 
 - task: PublishCodeCoverageResults@1
   displayName: 'Publish code coverage from $(System.DefaultWorkingDirectory)\Coverage-Pester.XML'
+  condition: succeededOrFailed()
   inputs:
     summaryFileLocation: '$(System.DefaultWorkingDirectory)\Coverage-Pester.XML'
 
