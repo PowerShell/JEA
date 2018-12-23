@@ -88,18 +88,29 @@ class JeaRoleCapabilities {
 
     Hidden [Boolean] ValidatePath() {
         $FileObject = [System.IO.FileInfo]::new($this.Path)
+        Write-Verbose -Message "Validating Path: $($FileObject.Fullname)"
+        Write-Verbose -Message "Checking file extension is psrc for: $($FileObject.Fullname)"
         if ($FileObject.Extension -ne '.psrc') {
+            Write-Verbose -Message "Doesn't have psrc extension for: $($FileObject.Fullname)"
             return $false
         }
 
+        Write-Verbose -Message "Checking parent forlder is RoleCapabilities for: $($FileObject.Fullname)"
         if ($FileObject.Directory.Name -ne 'RoleCapabilities') {
+            Write-Verbose -Message "Parent folder isn't RoleCapabilities for: $($FileObject.Fullname)"
             return $false
         }
 
+        Write-Verbose -Message "Checking Folder is in PSModulePath is psrc for: $($FileObject.Fullname)"
         if ($FileObject.FullName -notmatch (([Regex]::Escape($env:PSModulePath)) -replace ';', '|')) {
+            Write-Verbose -Message "Path isn't part of PSModulePath, valid values are:"
+            foreach ($path in $env:PSModulePath -split ';') {
+                Write-Verbose -Message "$Path"
+            }
             return $false
         }
 
+        Write-Verbose -Message "Path is a valid psrc path. Returning true."
         return $true
     }
 
