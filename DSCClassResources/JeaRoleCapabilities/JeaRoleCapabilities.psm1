@@ -102,7 +102,8 @@ class JeaRoleCapabilities {
         }
 
         Write-Verbose -Message "Checking Folder is in PSModulePath is psrc for: $($FileObject.Fullname)"
-        if ($FileObject.FullName -notmatch (([Regex]::Escape($env:PSModulePath)) -replace ';', '|')) {
+        $PSModulePathRegexPattern = (([Regex]::Escape($env:PSModulePath)).TrimStart(';').TrimEnd(';') -replace ';', '|')
+        if ($FileObject.FullName -notmatch $PSModulePathRegexPattern) {
             Write-Verbose -Message "Path isn't part of PSModulePath, valid values are:"
             foreach ($path in $env:PSModulePath -split ';') {
                 Write-Verbose -Message "$Path"
