@@ -44,6 +44,7 @@ steps:
      **\*.psm1
      **\*.psd1
      **\*.txt
+     **\*.ps1
     TargetFolder: '$(Build.ArtifactStagingDirectory)'
 
 - task: PublishBuildArtifacts@1
