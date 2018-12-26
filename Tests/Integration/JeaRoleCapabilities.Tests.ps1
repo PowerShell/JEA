@@ -3,7 +3,8 @@ Using Module ..\..\JeaDsc.psd1
 Describe "Integration testing JeaRoleCapabilities" -Tag Integration {
 
     BeforeAll {
-        $Env:PSModulePath += ';TestDrive:\'
+        $ModulePath = Resolve-Path -Path $PSScriptRoot\..\..\..\
+        $Env:PSModulePath += ";TestDrive:\;$ModulePath"
     }
 
     BeforeEach {
@@ -172,4 +173,42 @@ Describe "Integration testing JeaRoleCapabilities" -Tag Integration {
         }
     }
 
+    Context "Testing Applying BasicVisibleCmdlets Configuration File" {
+
+        It "Should apply the example BasicVisibleCmdlets configuration without throwing" {
+            $ConfigFile = Join-Path -Path $PSScriptRoot -ChildPath 'TestConfigurations\BasicVisibleCmdlets.config.ps1'
+            . $ConfigFile
+
+            &winrm quickconfig -quiet -force
+
+            $MofOutputFolder = 'TestDrive:\Configurations\BasicVisibleCmdlets'
+            $PsrcPath = Join-Path (Get-Item TestDrive:\).FullName -ChildPath 'BasicVisibleCmdlets\RoleCapabilities\BasicVisibleCmdlets.psrc'
+            &BasicVisibleCmdlets -OutputPath $MofOutputFolder -Path $PsrcPath
+            { Start-DscConfiguration -Path $MofOutputFolder -Wait -Force } | Should -Not -Throw
+        }
+
+        It "Should be able to call Get-DscConfiguration without throwing" {
+            { Get-DscConfiguration -ErrorAction Stop } | Should -Not -Throw
+        }
+
+        It "Should have created the psrc file and set the VisibleCmdlets to Get-Service" {
+            Test-Path -Path 'TestDrive:\BasicVisibleCmdlets\RoleCapabilities\BasicVisibleCmdlets.psrc' | Should -Be $true
+
+            $results = Import-PowerShellDataFile -Path 'TestDrive:\BasicVisibleCmdlets\RoleCapabilities\BasicVisibleCmdlets.psrc'
+
+            $results.VisibleCmdlets | Should -Be 'Get-Service'
+        }
+    }
+
+    Context "Testing Applying WildcardVisibleCmdlets Configuration File" {
+
+    }
+
+    Context "Testing Applying FunctionDefinitions Configuration File" {
+
+    }
+
+    Context "Testing Applying FailingFunctionDefinitions Configuration File" {
+
+    }
 }
