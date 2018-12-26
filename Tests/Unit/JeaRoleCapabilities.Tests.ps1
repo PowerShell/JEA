@@ -156,6 +156,29 @@ InModuleScope JeaRoleCapabilities {
                     $VisibleFunctions -eq 'New-Example' -and $VisibleCmdlets -eq 'Get-*'
                 }
             }
+
+            It "Should Write-Error if a function in FunctionDefinitions isn't also in VisibleFunctions" {
+                $class.FunctionDefinitions = "@{Name = 'Get-ExampleFunction'; ScriptBlock = {Get-Command} }"
+                $class.Set()
+
+                Assert-MockCalled -CommandName Write-Error -Scope It -Times 1
+            }
+
+            It "Should Write-Error 2 times if functions in FunctionDefinitions aren't also in VisibleFunctions" {
+                $class.VisibleFunctions = 'Get-Command','Get-Member'
+                $class.FunctionDefinitions = "@{Name = 'Get-ExampleFunction'; ScriptBlock = {Get-Command} }","@{Name = 'Get-OtherExample'; ScriptBlock = {Get-Command} }"
+                $class.Set()
+
+                Assert-MockCalled -CommandName Write-Error -Scope It -Times 2
+            }
+
+            It "Should not Write-Error when a function in FunctionDefinitions is also in VisibleFunctions" {
+                $class.FunctionDefinitions = "@{Name = 'Get-ExampleFunction'; ScriptBlock = {Get-Command} }"
+                $class.VisibleFunctions = 'Get-ExampleFunction','Get-Help','Get-Member'
+                $class.Set()
+
+                Assert-MockCalled -CommandName Write-Error -Scope It -Times 0
+            }
         }
     }
 }

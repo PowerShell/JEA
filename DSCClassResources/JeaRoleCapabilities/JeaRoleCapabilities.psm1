@@ -145,6 +145,14 @@ class JeaRoleCapabilities {
             Foreach ($Parameter in $Parameters.Keys.Where({$Parameters[$_] -match '@{'})) {
                 $Parameters[$Parameter] = Convert-StringToObject -InputString $Parameters[$Parameter]
             }
+
+            if ($Parameters.ContainsKey('FunctionDefinitions')) {
+                foreach ($FunctionDefName in $Parameters['FunctionDefinitions'].Name) {
+                    if ($FunctionDefName -notin $Parameters['VisibleFunctions']) {
+                        Write-Error -Message "Function defined but not visible to Role Configuration: $FunctionDefName"
+                    }
+                }
+            }
             $null = New-Item -Path $this.Path -ItemType File -Force
 
             New-PSRoleCapabilityFile @Parameters
