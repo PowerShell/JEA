@@ -4,7 +4,14 @@ Describe "Integration testing JeaRoleCapabilities" -Tag Integration {
 
     BeforeAll {
         $ModulePath = Resolve-Path -Path $PSScriptRoot\..\..\..\
-        $Env:PSModulePath += ";TestDrive:\;$ModulePath"
+        $OldPsModulePath = $Env:PSModulePath
+        $Env:PSModulePath += ";$ModulePath"
+        [Environment]::SetEnvironmentVariable('PSModulePath',$Env:PSModulePath,[EnvironmentVariableTarget]::Machine)
+        $Env:PSModulePath += ";TestDrive:\"
+    }
+
+    AfterAll {
+        [Environment]::SetEnvironmentVariable('PSModulePath',$OldPsModulePath,[EnvironmentVariableTarget]::Machine)
     }
 
     BeforeEach {
