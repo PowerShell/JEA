@@ -25,12 +25,14 @@ steps:
 
 - task: PublishTestResults@2
   displayName: 'Publish Test Results'
+  condition: succeededOrFailed()
   inputs:
     testResultsFormat: NUnit
     testResultsFiles: '$(System.DefaultWorkingDirectory)\Test-Pester.XML'
 
 - task: PublishCodeCoverageResults@1
   displayName: 'Publish code coverage from $(System.DefaultWorkingDirectory)\Coverage-Pester.XML'
+  condition: succeededOrFailed()
   inputs:
     summaryFileLocation: '$(System.DefaultWorkingDirectory)\Coverage-Pester.XML'
 
@@ -42,7 +44,10 @@ steps:
      **\*.psm1
      **\*.psd1
      **\*.txt
+     **\*.ps1
     TargetFolder: '$(Build.ArtifactStagingDirectory)'
 
 - task: PublishBuildArtifacts@1
-  displayName: 'Publish Artifact: drop'
+  displayName: 'Publish Artifact: JeaDsc'
+  inputs:
+    ArtifactName: JeaDsc

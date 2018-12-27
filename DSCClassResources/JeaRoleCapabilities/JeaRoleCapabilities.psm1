@@ -1,3 +1,4 @@
+using namespace System.Management.Automation.Language
 enum Ensure
 {
     Present
@@ -85,40 +86,54 @@ class JeaRoleCapabilities {
     [DscProperty()]
     [String[]]$AssembliesToLoad
 
-        Hidden [Boolean] ValidatePath() {
+    Hidden [Boolean] ValidatePath() {
         $FileObject = [System.IO.FileInfo]::new($this.Path)
+        Write-Verbose -Message "Validating Path: $($FileObject.Fullname)"
+        Write-Verbose -Message "Checking file extension is psrc for: $($FileObject.Fullname)"
         if ($FileObject.Extension -ne '.psrc') {
+            Write-Verbose -Message "Doesn't have psrc extension for: $($FileObject.Fullname)"
             return $false
         }
 
+        Write-Verbose -Message "Checking parent forlder is RoleCapabilities for: $($FileObject.Fullname)"
         if ($FileObject.Directory.Name -ne 'RoleCapabilities') {
+            Write-Verbose -Message "Parent folder isn't RoleCapabilities for: $($FileObject.Fullname)"
             return $false
         }
 
-        if ($FileObject.FullName -notmatch (([Regex]::Escape($env:PSModulePath)) -replace ';', '|')) {
+        Write-Verbose -Message "Checking Folder is in PSModulePath is psrc for: $($FileObject.Fullname)"
+        $PSModulePathRegexPattern = (([Regex]::Escape($env:PSModulePath)).TrimStart(';').TrimEnd(';') -replace ';', '|')
+        if ($FileObject.FullName -notmatch $PSModulePathRegexPattern) {
+            Write-Verbose -Message "Path isn't part of PSModulePath, valid values are:"
+            foreach ($path in $env:PSModulePath -split ';') {
+                Write-Verbose -Message "$Path"
+            }
             return $false
         }
 
+        Write-Verbose -Message "Path is a valid psrc path. Returning true."
         return $true
     }
 
     [JeaRoleCapabilities] Get() {
+        $CurrentState = [JeaRoleCapabilities]::new()
+        $CurrentState.Path = $this.Path
         if (Test-Path -Path $this.Path) {
-            $CurrentState = Import-PowerShellDataFile -Path $this.Path
+            $CurrentStateFile = Import-PowerShellDataFile -Path $this.Path
 
             'Copyright','GUID','Author','CompanyName' | Foreach-Object {
-                $CurrentState.Remove($_)
+                $CurrentStateFile.Remove($_)
             }
 
-            foreach ($Property in $CurrentState.Keys) {
-                $this.$Property = $CurrentState[$Property]
+            foreach ($Property in $CurrentStateFile.Keys) {
+                $CurrentState.$Property = $CurrentStateFile[$Property]
             }
-            $this.Ensure = [Ensure]::Present
+            $CurrentState.Ensure = [Ensure]::Present
         }
         else {
-            $this.Ensure = [Ensure]::Absent
+            $CurrentState.Ensure = [Ensure]::Absent
         }
-        return $this
+        return $CurrentState
     }
 
     [void] Set() {
@@ -129,6 +144,14 @@ class JeaRoleCapabilities {
 
             Foreach ($Parameter in $Parameters.Keys.Where({$Parameters[$_] -match '@{'})) {
                 $Parameters[$Parameter] = Convert-StringToObject -InputString $Parameters[$Parameter]
+            }
+
+            if ($Parameters.ContainsKey('FunctionDefinitions')) {
+                foreach ($FunctionDefName in $Parameters['FunctionDefinitions'].Name) {
+                    if ($FunctionDefName -notin $Parameters['VisibleFunctions']) {
+                        Write-Error -Message "Function defined but not visible to Role Configuration: $FunctionDefName"
+                    }
+                }
             }
             $null = New-Item -Path $this.Path -ItemType File -Force
 
@@ -149,9 +172,9 @@ class JeaRoleCapabilities {
             return $false
         }
         elseif ($this.Ensure -eq [Ensure]::Present -and (Test-Path -Path $this.Path)) {
-            $CurrentState = $this.Get()
+            $CurrentState = Convert-ObjectToHashtable -Object $this.Get()
 
-            $Parameters = Convert-ObjectToHashtable($this)
+            $Parameters = Convert-ObjectToHashtable -Object $this
             $Compare = Compare-Hashtable -ActualValue $CurrentState -ExpectedValue $Parameters
 
             if ($null-eq $Compare) {
@@ -175,37 +198,56 @@ class JeaRoleCapabilities {
 function Convert-StringToObject {
     [cmdletbinding()]
     param (
-        [string]$InputString
+        [string[]]$InputString
     )
 
     $ParseErrors = @()
     $FakeCommand = "Totally-NotACmdlet -FakeParameter $InputString"
-    $AST = [System.Management.Automation.Language.Parser]::ParseInput($FakeCommand,[ref]$null,[ref]$ParseErrors)
+    $AST = [Parser]::ParseInput($FakeCommand,[ref]$null,[ref]$ParseErrors)
     if(-not $ParseErrors){
         # Use Ast.Find() to locate the CommandAst parsed from our fake command
-        $CmdAst = $AST.Find({param($ChildAst) $ChildAst -is [System.Management.Automation.Language.CommandAst]},$false)
+        $CmdAst = $AST.Find({param($ChildAst) $ChildAst -is [CommandAst]},$false)
         # Grab the user-supplied arguments (index 0 is the command name, 1 is our fake parameter)
-        $ArgumentAst = $CmdAst.CommandElements[2]
-        if($ArgumentAst -is [System.Management.Automation.Language.ArrayLiteralAst]) {
-            # Argument was a list
-            foreach ($Element in $ArgumentAst.Elements){
-                if ($Element.StaticType.Name -eq 'String'){
-                    $Element.value
+        $AllArgumentAst = $CmdAst.CommandElements.Where({$_ -isnot [CommandParameterAst] -and $_.Value -ne 'Totally-NotACmdlet'})
+        foreach ($ArgumentAst in $AllArgumentAst) {
+            if($ArgumentAst -is [ArrayLiteralAst]) {
+                # Argument was a list
+                foreach ($Element in $ArgumentAst.Elements){
+                    if ($Element.StaticType.Name -eq 'String'){
+                        $Element.value
+                    }
+                    if ($Element.StaticType.Name -eq 'Hashtable'){
+                        [Hashtable]$Element.SafeGetValue()
+                    }
                 }
-                if ($Element.StaticType.Name -eq 'Hashtable'){
-                    [Hashtable]$Element.SafeGetValue()
-                }
-            }
-        }
-        else {
-            if ($ArgumentAst -is [System.Management.Automation.Language.HashtableAst]) {
-                [Hashtable]$ArgumentAst.SafeGetValue()
-            }
-            elseif ($ArgumentAst -is [System.Management.Automation.Language.StringConstantExpressionAst]) {
-                $InputString
             }
             else {
-                Write-Error -Message "Input was not a valid hashtable, string or collection of both. Please check the contents and try again."
+                if ($ArgumentAst -is [HashtableAst]) {
+                    $ht = [Hashtable]$ArgumentAst.SafeGetValue()
+                    for ($i = 1; $i -lt $ht.Keys.Count; $i++)
+                    {
+                        $value = $ht[([array]$ht.Keys)[$i]]
+                        if ($value -is [scriptblock]) {
+
+                            $scriptBlockText = $value.Ast.Extent.Text
+
+                            if ($scriptBlockText[$value.Ast.Extent.StartOffset] -eq '{' -and $scriptBlockText[$endOffset - 1] -eq '}') {
+
+                                $scriptBlockText = $scriptBlockText.Substring(0, $scriptBlockText.Length - 1)
+                                $scriptBlockText = $scriptBlockText.Substring(1, $scriptBlockText.Length - 1)
+                            }
+
+                            $ht[([array]$ht.Keys)[$i]] = [scriptblock]::Create($scriptBlockText)
+                        }
+                    }
+                    $ht
+                }
+                elseif ($ArgumentAst -is [StringConstantExpressionAst]) {
+                    $ArgumentAst.Value
+                }
+                else {
+                    Write-Error -Message "Input was not a valid hashtable, string or collection of both. Please check the contents and try again."
+                }
             }
         }
     }

@@ -125,7 +125,12 @@ function Compare-Hashtable($ActualValue, $ExpectedValue) {
         }
         $expectedItem = $ExpectedValue[$expectedKey]
         $actualItem = $ActualValue[$expectedKey]
-        if (-not ($actualItem -eq $expectedItem)) {
+        if ($expectedItem -Is [Array] -or $actualItem -Is [Array]) {
+            if ($result = Compare-ArrayValues -ActualValue $actualItem -ExpectedValue $expectedItem) {
+                return $result
+            }
+        }
+        elseif (-not ($actualItem -eq $expectedItem)) {
             return "Value differs for key {$expectedKey}. Expected value: {$expectedItem}, actual value: {$actualItem}"
         }
     }
@@ -136,8 +141,44 @@ function Compare-Hashtable($ActualValue, $ExpectedValue) {
         }
         $expectedItem = $ExpectedValue[$actualKey]
         $actualItem = $ActualValue[$actualKey]
-        if (-not ($actualItem -eq $expectedItem)) {
+        if ($expectedItem -Is [Array] -or $actualItem -Is [Array]) {
+            if ($result = Compare-ArrayValues -ActualValue $actualItem -ExpectedValue $expectedItem) {
+                return $result
+            }
+        }
+        elseif (-not ($actualItem -eq $expectedItem)) {
             return "Value differs for key {$actualKey}. Expected value: {$expectedItem}, actual value: {$actualItem}"
         }
     }
+}
+
+function Compare-ArrayValues {
+    param (
+        $ActualValue,
+        $ExpectedValue
+    )
+
+    $ActualValue = @($ActualValue)
+    $ExpectedGroups = $ExpectedValue | Group-Object | Sort-Object -Property Name
+    $ActualGroups = $ActualValue | Group-Object | Sort-Object -Property Name
+    for ($i = 0; $i -lt $ExpectedGroups.Length; $i++) {
+        if ( ($i -ge $ActualGroups.Length) `
+                -or (-not($ActualGroups[$i].Name -eq $ExpectedGroups[$i].Name))) {
+            return "Expected: {$ExpectedValue}. Actual: {$ActualValue}. Actual is missing item: $($ExpectedGroups[$i].Name)"
+        }
+        if (-not($ActualGroups[$i].Count -eq $ExpectedGroups[$i].Count)) {
+            return "Expected: {$ExpectedValue}. Actual: {$ActualValue}. Actual has $($ActualGroups[$i].Count) of item '$($ExpectedGroups[$i].Name)', expected $($ExpectedGroups[$i].Count)"
+        }
+    }
+    for ($i = 0; $i -lt $ActualGroups.Length; $i++) {
+        # check for items in actual not in expected
+        if ( ($i -ge $ExpectedGroups.Length) `
+                -or (-not($ExpectedGroups[$i].Name -eq $ActualGroups[$i].Name))) {
+            return "Expected: {$ExpectedValue}. Actual: {$ActualValue}. Expected doesn't have item: $($ActualGroups[$i].Name)"
+        }
+    }
+    if ($ActualValue.Length -ne $ExpectedValue.Length) {
+        return "Lengths differ. Expected length $($ExpectedValue.Length). Actual length $($ActualValue.Length) ";
+    }
+    return $null;
 }
