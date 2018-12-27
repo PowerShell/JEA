@@ -265,5 +265,18 @@ Describe "Integration testing JeaRoleCapabilities" -Tag Integration {
 
     Context "Testing Applying FailingFunctionDefinitions Configuration File" {
 
+        It "Should throw when attempting to apply the example FunctionDefinitions configuration" -Skip:$BuildBox {
+            $ConfigFile = Join-Path -Path $PSScriptRoot -ChildPath 'TestConfigurations\FailingFunctionDefinitions.config.ps1'
+            . $ConfigFile
+
+            $MofOutputFolder = 'TestDrive:\Configurations\FailingFunctionDefinitions'
+            $PsrcPath = Join-Path (Get-Item TestDrive:\).FullName -ChildPath 'FailingFunctionDefinitions\RoleCapabilities\FailingFunctionDefinitions.psrc'
+            &FailingFunctionDefinitions -OutputPath $MofOutputFolder -Path $PsrcPath
+            { Start-DscConfiguration -Path $MofOutputFolder -Wait -Force -ErrorAction Stop } | Should -Throw
+        }
+
+        It "Should not have created the psrc file" -Skip:$BuildBox {
+            Test-Path -Path 'TestDrive:\FailingFunctionDefinitions\RoleCapabilities\FailingFunctionDefinitions.psrc' | Should -Be $false
+        }
     }
 }
