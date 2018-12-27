@@ -8,6 +8,12 @@ Describe "Integration testing JeaRoleCapabilities" -Tag Integration {
         $Env:PSModulePath += ";$ModulePath"
         [Environment]::SetEnvironmentVariable('PSModulePath',$Env:PSModulePath,[EnvironmentVariableTarget]::Machine)
         $Env:PSModulePath += ";TestDrive:\"
+
+        $BuildBox = $true
+        if ($Env:SYSTEM_DEFAULTWORKINGDIRECTORY) {
+            &winrm quickconfig -quiet -force
+            $BuildBox = $false
+        }
     }
 
     AfterAll {
@@ -182,11 +188,9 @@ Describe "Integration testing JeaRoleCapabilities" -Tag Integration {
 
     Context "Testing Applying BasicVisibleCmdlets Configuration File" {
 
-        It "Should apply the example BasicVisibleCmdlets configuration without throwing" {
+        It "Should apply the example BasicVisibleCmdlets configuration without throwing" -Skip:$BuildBox {
             $ConfigFile = Join-Path -Path $PSScriptRoot -ChildPath 'TestConfigurations\BasicVisibleCmdlets.config.ps1'
             . $ConfigFile
-
-            &winrm quickconfig -quiet -force
 
             $MofOutputFolder = 'TestDrive:\Configurations\BasicVisibleCmdlets'
             $PsrcPath = Join-Path (Get-Item TestDrive:\).FullName -ChildPath 'BasicVisibleCmdlets\RoleCapabilities\BasicVisibleCmdlets.psrc'
@@ -194,11 +198,11 @@ Describe "Integration testing JeaRoleCapabilities" -Tag Integration {
             { Start-DscConfiguration -Path $MofOutputFolder -Wait -Force } | Should -Not -Throw
         }
 
-        It "Should be able to call Get-DscConfiguration without throwing" {
+        It "Should be able to call Get-DscConfiguration without throwing" -Skip:$BuildBox {
             { Get-DscConfiguration -ErrorAction Stop } | Should -Not -Throw
         }
 
-        It "Should have created the psrc file and set the VisibleCmdlets to Get-Service" {
+        It "Should have created the psrc file and set the VisibleCmdlets to Get-Service" -Skip:$BuildBox {
             Test-Path -Path 'TestDrive:\BasicVisibleCmdlets\RoleCapabilities\BasicVisibleCmdlets.psrc' | Should -Be $true
 
             $results = Import-PowerShellDataFile -Path 'TestDrive:\BasicVisibleCmdlets\RoleCapabilities\BasicVisibleCmdlets.psrc'
