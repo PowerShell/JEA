@@ -238,6 +238,29 @@ Describe "Integration testing JeaRoleCapabilities" -Tag Integration {
 
     Context "Testing Applying FunctionDefinitions Configuration File" {
 
+        It "Should apply the example FunctionDefinitions configuration without throwing" -Skip:$BuildBox {
+            $ConfigFile = Join-Path -Path $PSScriptRoot -ChildPath 'TestConfigurations\FunctionDefinitions.config.ps1'
+            . $ConfigFile
+
+            $MofOutputFolder = 'TestDrive:\Configurations\FunctionDefinitions'
+            $PsrcPath = Join-Path (Get-Item TestDrive:\).FullName -ChildPath 'FunctionDefinitions\RoleCapabilities\FunctionDefinitions.psrc'
+            &FunctionDefinitions -OutputPath $MofOutputFolder -Path $PsrcPath
+            { Start-DscConfiguration -Path $MofOutputFolder -Wait -Force } | Should -Not -Throw
+        }
+
+        It "Should be able to call Get-DscConfiguration without throwing" -Skip:$BuildBox {
+            { Get-DscConfiguration -ErrorAction Stop } | Should -Not -Throw
+        }
+
+        It "Should have created the psrc file and set the FunctionDefinitions and VisibleFunctions to Get-ExampleData" -Skip:$BuildBox {
+            Test-Path -Path 'TestDrive:\FunctionDefinitions\RoleCapabilities\FunctionDefinitions.psrc' | Should -Be $true
+
+            $results = Import-PowerShellDataFile -Path 'TestDrive:\FunctionDefinitions\RoleCapabilities\FunctionDefinitions.psrc'
+
+            $results.FunctionDefinitions.Name | Should -Be 'Get-ExampleData'
+            $results.FunctionDefinitions.ScriptBlock | Should -Be '{Get-Command}'
+            $results.FunctionDefinitions.ScriptBlock | Should -BeOfType [ScriptBlock]
+        }
     }
 
     Context "Testing Applying FailingFunctionDefinitions Configuration File" {
