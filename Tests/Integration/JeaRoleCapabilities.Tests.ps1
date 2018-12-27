@@ -213,6 +213,27 @@ Describe "Integration testing JeaRoleCapabilities" -Tag Integration {
 
     Context "Testing Applying WildcardVisibleCmdlets Configuration File" {
 
+        It "Should apply the example WildcardVisibleCmdlets configuration without throwing" -Skip:$BuildBox {
+            $ConfigFile = Join-Path -Path $PSScriptRoot -ChildPath 'TestConfigurations\WildcardVisibleCmdlets.config.ps1'
+            . $ConfigFile
+
+            $MofOutputFolder = 'TestDrive:\Configurations\WildcardVisibleCmdlets'
+            $PsrcPath = Join-Path (Get-Item TestDrive:\).FullName -ChildPath 'WildcardVisibleCmdlets\RoleCapabilities\WildcardVisibleCmdlets.psrc'
+            &WildcardVisibleCmdlets -OutputPath $MofOutputFolder -Path $PsrcPath
+            { Start-DscConfiguration -Path $MofOutputFolder -Wait -Force } | Should -Not -Throw
+        }
+
+        It "Should be able to call Get-DscConfiguration without throwing" -Skip:$BuildBox {
+            { Get-DscConfiguration -ErrorAction Stop } | Should -Not -Throw
+        }
+
+        It "Should have created the psrc file and set the VisibleCmdlets to Get-* and DnsServer\*" -Skip:$BuildBox {
+            Test-Path -Path 'TestDrive:\WildcardVisibleCmdlets\RoleCapabilities\WildcardVisibleCmdlets.psrc' | Should -Be $true
+
+            $results = Import-PowerShellDataFile -Path 'TestDrive:\WildcardVisibleCmdlets\RoleCapabilities\WildcardVisibleCmdlets.psrc'
+
+            $results.VisibleCmdlets | Should -Be 'Get-*','DnsServer\*'
+        }
     }
 
     Context "Testing Applying FunctionDefinitions Configuration File" {
