@@ -1,12 +1,10 @@
-enum Ensure
-{
+enum Ensure {
     Present
     Absent
 }
 
 [DscResource()]
-class JeaSessionConfiguration
-{
+class JeaSessionConfiguration {
     ## The optional state that ensures the endpoint is present or absent. The defualt value is [Ensure]::Present.
     [DscProperty()]
     [Ensure] $Ensure = [Ensure]::Present
@@ -129,8 +127,7 @@ class JeaSessionConfiguration
     [int] $HungRegistrationTimeout = 10
 
     ## Applies the JEA configuration
-    [void] Set()
-    {
+    [void] Set() {
         $ErrorActionPreference = 'Stop'
 
         $psscPath = Join-Path ([IO.Path]::GetTempPath()) ([IO.Path]::GetRandomFileName() + ".pssc")
@@ -139,10 +136,8 @@ class JeaSessionConfiguration
             SessionType = 'RestrictedRemoteServer'
         }
 
-        if ($this.Ensure -eq [Ensure]::Present)
-        {
-            if ($this.RunAsVirtualAccountGroups -and $this.GroupManagedServiceAccount)
-            {
+        if ($this.Ensure -eq [Ensure]::Present) {
+            if ($this.RunAsVirtualAccountGroups -and $this.GroupManagedServiceAccount) {
                 throw "The RunAsVirtualAccountGroups setting can not be used when a configuration is set to run as a Group Managed Service Account"
             }
 
@@ -150,159 +145,132 @@ class JeaSessionConfiguration
             $configurationFileArguments["RoleDefinitions"] = Convert-StringToHashtable -hashtableAsString $this.RoleDefinitions
 
             ## Set up the JEA identity
-            if ($this.RunAsVirtualAccountGroups)
-            {
+            if ($this.RunAsVirtualAccountGroups) {
                 $configurationFileArguments["RunAsVirtualAccount"] = $true
                 $configurationFileArguments["RunAsVirtualAccountGroups"] = $this.RunAsVirtualAccountGroups
             }
-            elseif ($this.GroupManagedServiceAccount)
-            {
+            elseif ($this.GroupManagedServiceAccount) {
                 $configurationFileArguments["GroupManagedServiceAccount"] = $this.GroupManagedServiceAccount -replace '\$$', ''
             }
-            else
-            {
+            else {
                 $configurationFileArguments["RunAsVirtualAccount"] = $true
             }
 
             ## Transcripts
-            if ($this.TranscriptDirectory)
-            {
+            if ($this.TranscriptDirectory) {
                 $configurationFileArguments["TranscriptDirectory"] = $this.TranscriptDirectory
             }
 
             ## Startup scripts
-            if ($this.ScriptsToProcess)
-            {
+            if ($this.ScriptsToProcess) {
                 $configurationFileArguments["ScriptsToProcess"] = $this.ScriptsToProcess
             }
 
             ## Mount user drive
-            if ($this.MountUserDrive)
-            {
+            if ($this.MountUserDrive) {
                 $configurationFileArguments["MountUserDrive"] = $this.MountUserDrive
             }
 
             ## User drive maximum size
-            if ($this.UserDriveMaximumSize)
-            {
+            if ($this.UserDriveMaximumSize) {
                 $configurationFileArguments["UserDriveMaximumSize"] = $this.UserDriveMaximumSize
                 $configurationFileArguments["MountUserDrive"] = $true
             }
 
             ## Required groups
-            if ($this.RequiredGroups)
-            {
+            if ($this.RequiredGroups) {
                 ## Convert the RequiredGroups string to the actual Hashtable
                 $requiredGroupsHash = Convert-StringToHashtable -hashtableAsString $this.RequiredGroups
                 $configurationFileArguments["RequiredGroups"] = $requiredGroupsHash
             }
 
             ## Modules to import
-            if ($this.ModulesToImport)
-            {
+            if ($this.ModulesToImport) {
                 $configurationFileArguments["ModulesToImport"] = Convert-StringToArrayOfObject -literalString $this.ModulesToImport
             }
 
             ## Visible aliases
-            if ($this.VisibleAliases)
-            {
+            if ($this.VisibleAliases) {
                 $configurationFileArguments["VisibleAliases"] = $this.VisibleAliases
             }
 
             ## Visible cmdlets
-            if ($this.VisibleCmdlets)
-            {
+            if ($this.VisibleCmdlets) {
                 $configurationFileArguments["VisibleCmdlets"] = Convert-StringToArrayOfObject -literalString $this.VisibleCmdlets
             }
 
             ## Visible functions
-            if ($this.VisibleFunctions)
-            {
+            if ($this.VisibleFunctions) {
                 $configurationFileArguments["VisibleFunctions"] = Convert-StringToArrayOfObject -literalString $this.VisibleFunctions
             }
 
             ## Visible external commands
-            if ($this.VisibleExternalCommands)
-            {
+            if ($this.VisibleExternalCommands) {
                 $configurationFileArguments["VisibleExternalCommands"] = $this.VisibleExternalCommands
             }
 
             ## Visible providers
-            if ($this.VisibleProviders)
-            {
+            if ($this.VisibleProviders) {
                 $configurationFileArguments["VisibleProviders"] = $this.VisibleProviders
             }
 
             ## Visible providers
-            if ($this.VisibleProviders)
-            {
+            if ($this.VisibleProviders) {
                 $configurationFileArguments["VisibleProviders"] = $this.VisibleProviders
             }
 
             ## Alias definitions
-            if ($this.AliasDefinitions)
-            {
+            if ($this.AliasDefinitions) {
                 $configurationFileArguments["AliasDefinitions"] = Convert-StringToArrayOfHashtable -literalString $this.AliasDefinitions
             }
 
             ## Function definitions
-            if ($this.FunctionDefinitions)
-            {
+            if ($this.FunctionDefinitions) {
                 $configurationFileArguments["FunctionDefinitions"] = Convert-StringToArrayOfHashtable -literalString $this.FunctionDefinitions
             }
 
             ## Variable definitions
-            if ($this.VariableDefinitions)
-            {
+            if ($this.VariableDefinitions) {
                 $configurationFileArguments["VariableDefinitions"] = Convert-StringToArrayOfHashtable -literalString $this.VariableDefinitions
             }
 
             ## Environment variables
-            if ($this.EnvironmentVariables)
-            {
+            if ($this.EnvironmentVariables) {
                 $configurationFileArguments["EnvironmentVariables"] = Convert-StringToHashtable -hashtableAsString $this.EnvironmentVariables
             }
 
             ## Types to process
-            if ($this.TypesToProcess)
-            {
+            if ($this.TypesToProcess) {
                 $configurationFileArguments["TypesToProcess"] = $this.TypesToProcess
             }
 
             ## Formats to process
-            if ($this.FormatsToProcess)
-            {
+            if ($this.FormatsToProcess) {
                 $configurationFileArguments["FormatsToProcess"] = $this.FormatsToProcess
             }
 
             ## Assemblies to load
-            if ($this.AssembliesToLoad)
-            {
+            if ($this.AssembliesToLoad) {
                 $configurationFileArguments["AssembliesToLoad"] = $this.AssembliesToLoad
             }
         }
 
         ## Register the endpoint
-        try
-        {
+        try {
             ## If we are replacing Microsoft.PowerShell, create a 'break the glass' endpoint
-            if ($this.EndpointName -eq "Microsoft.PowerShell")
-            {
+            if ($this.EndpointName -eq "Microsoft.PowerShell") {
                 $breakTheGlassName = "Microsoft.PowerShell.Restricted"
-                if (-not ($this.GetPSSessionConfiguration($breakTheGlassName)))
-                {
+                if (-not ($this.GetPSSessionConfiguration($breakTheGlassName))) {
                     $this.RegisterPSSessionConfiguration($breakTheGlassName, $null, $this.HungRegistrationTimeout)
                 }
             }
 
             ## Remove the previous one, if any.
-            if ($this.GetPSSessionConfiguration($this.EndpointName))
-            {
+            if ($this.GetPSSessionConfiguration($this.EndpointName)) {
                 $this.UnregisterPSSessionConfiguration($this.EndpointName)
             }
 
-            if ($this.Ensure -eq [Ensure]::Present)
-            {
+            if ($this.Ensure -eq [Ensure]::Present) {
                 ## Create the configuration file
                 New-PSSessionConfigurationFile @configurationFileArguments
                 ## Register the configuration file
@@ -310,25 +278,20 @@ class JeaSessionConfiguration
 
             }
         }
-        finally
-        {
-            if (Test-Path $psscPath)
-            {
+        finally {
+            if (Test-Path $psscPath) {
                 Remove-Item $psscPath
             }
         }
     }
 
     # Tests if the resource is in the desired state.
-    [bool] Test()
-    {
+    [bool] Test() {
         $currentInstance = $this.Get()
 
         # short-circuit if the resource is not present and is not supposed to be present
-        if ($this.Ensure -eq [Ensure]::Absent)
-        {
-            if ($currentInstance.Ensure -eq [Ensure]::Absent)
-            {
+        if ($this.Ensure -eq [Ensure]::Absent) {
+            if ($currentInstance.Ensure -eq [Ensure]::Absent) {
                 return $true
             }
 
@@ -337,14 +300,12 @@ class JeaSessionConfiguration
         }
 
         ## If this was configured with our mandatory property (RoleDefinitions), dig deeper
-        if (-not $currentInstance.RoleDefinitions)
-        {
+        if (-not $currentInstance.RoleDefinitions) {
             Write-Verbose "No RoleDefinitions found"
             return $false
         }
 
-        if ($currentInstance.EndpointName -ne $this.EndpointName)
-        {
+        if ($currentInstance.EndpointName -ne $this.EndpointName) {
             Write-Verbose "EndpointName not equal: $($currentInstance.EndpointName)"
             return $false
         }
@@ -352,47 +313,39 @@ class JeaSessionConfiguration
         ## Convert the RoleDefinitions string to the actual Hashtable
         $roleDefinitionsHash = Convert-StringToHashtable -hashtableAsString $this.RoleDefinitions
 
-        if (-not $this.ComplexObjectsEqual((Convert-StringToHashtable -hashtableAsString $currentInstance.RoleDefinitions), $roleDefinitionsHash))
-        {
+        if (-not $this.ComplexObjectsEqual((Convert-StringToHashtable -hashtableAsString $currentInstance.RoleDefinitions), $roleDefinitionsHash)) {
             Write-Verbose "RoleDfinitions not equal: $($currentInstance.RoleDefinitions)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual($currentInstance.RunAsVirtualAccountGroups, $this.RunAsVirtualAccountGroups))
-        {
+        if (-not $this.ComplexObjectsEqual($currentInstance.RunAsVirtualAccountGroups, $this.RunAsVirtualAccountGroups)) {
             Write-Verbose "RunAsVirtualAccountGroups not equal: $(ConvertTo-Json $currentInstance.RunAsVirtualAccountGroups -Depth 100)"
             return $false
         }
 
-        if ($currentInstance.GroupManagedServiceAccount -or $this.GroupManagedServiceAccount)
-        {
-            if ($currentInstance.GroupManagedServiceAccount -ne ($this.GroupManagedServiceAccount -replace '\$$', ''))
-            {
+        if ($currentInstance.GroupManagedServiceAccount -or $this.GroupManagedServiceAccount) {
+            if ($currentInstance.GroupManagedServiceAccount -ne ($this.GroupManagedServiceAccount -replace '\$$', '')) {
                 Write-Verbose "GroupManagedServiceAccount not equal: $($currentInstance.GroupManagedServiceAccount)"
                 return $false
             }
         }
 
-        if ($currentInstance.TranscriptDirectory -ne $this.TranscriptDirectory)
-        {
+        if ($currentInstance.TranscriptDirectory -ne $this.TranscriptDirectory) {
             Write-Verbose "TranscriptDirectory not equal: $($currentInstance.TranscriptDirectory)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual($currentInstance.ScriptsToProcess, $this.ScriptsToProcess))
-        {
+        if (-not $this.ComplexObjectsEqual($currentInstance.ScriptsToProcess, $this.ScriptsToProcess)) {
             Write-Verbose "ScriptsToProcess not equal: $(ConvertTo-Json $currentInstance.ScriptsToProcess -Depth 100)"
             return $false
         }
 
-        if ($currentInstance.MountUserDrive -ne $this.MountUserDrive)
-        {
+        if ($currentInstance.MountUserDrive -ne $this.MountUserDrive) {
             Write-Verbose "MountUserDrive not equal: $($currentInstance.MountUserDrive)"
             return $false
         }
 
-        if ($currentInstance.UserDriveMaximumSize -ne $this.UserDriveMaximumSize)
-        {
+        if ($currentInstance.UserDriveMaximumSize -ne $this.UserDriveMaximumSize) {
             Write-Verbose "UserDriveMaximumSize not equal: $($currentInstance.UserDriveMaximumSize)"
             return $false
         }
@@ -400,86 +353,72 @@ class JeaSessionConfiguration
         # Check for null required groups
         $requiredGroupsHash = Convert-StringToHashtable -hashtableAsString $this.RequiredGroups
 
-        if (-not $this.ComplexObjectsEqual((Convert-StringToHashtable -hashtableAsString $currentInstance.RequiredGroups), $requiredGroupsHash))
-        {
+        if (-not $this.ComplexObjectsEqual((Convert-StringToHashtable -hashtableAsString $currentInstance.RequiredGroups), $requiredGroupsHash)) {
             Write-Verbose "RequiredGroups not equal: $(ConvertTo-Json $currentInstance.RequiredGroups -Depth 100)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual((Convert-StringToArrayOfObject -literalString $currentInstance.ModulesToImport), (Convert-StringToArrayOfObject -literalString $this.ModulesToImport)))
-        {
+        if (-not $this.ComplexObjectsEqual((Convert-StringToArrayOfObject -literalString $currentInstance.ModulesToImport), (Convert-StringToArrayOfObject -literalString $this.ModulesToImport))) {
             Write-Verbose "ModulesToImport not equal: $(ConvertTo-Json $currentInstance.ModulesToImport -Depth 100)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual($currentInstance.VisibleAliases, $this.VisibleAliases))
-        {
+        if (-not $this.ComplexObjectsEqual($currentInstance.VisibleAliases, $this.VisibleAliases)) {
             Write-Verbose "VisibleAliases not equal: $(ConvertTo-Json $currentInstance.VisibleAliases -Depth 100)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual((Convert-StringToArrayOfObject -literalString $currentInstance.VisibleCmdlets), (Convert-StringToArrayOfObject -literalString $this.VisibleCmdlets)))
-        {
+        if (-not $this.ComplexObjectsEqual((Convert-StringToArrayOfObject -literalString $currentInstance.VisibleCmdlets), (Convert-StringToArrayOfObject -literalString $this.VisibleCmdlets))) {
             Write-Verbose "VisibleCmdlets not equal: $(ConvertTo-Json $currentInstance.VisibleCmdlets -Depth 100)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual((Convert-StringToArrayOfObject -literalString $currentInstance.VisibleFunctions), (Convert-StringToArrayOfObject -literalString $this.VisibleFunctions)))
-        {
+        if (-not $this.ComplexObjectsEqual((Convert-StringToArrayOfObject -literalString $currentInstance.VisibleFunctions), (Convert-StringToArrayOfObject -literalString $this.VisibleFunctions))) {
             Write-Verbose "VisibleFunctions not equal: $(ConvertTo-Json $currentInstance.VisibleFunctions -Depth 100)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual($currentInstance.VisibleExternalCommands, $this.VisibleExternalCommands))
-        {
+        if (-not $this.ComplexObjectsEqual($currentInstance.VisibleExternalCommands, $this.VisibleExternalCommands)) {
             Write-Verbose "VisibleExternalCommands not equal: $(ConvertTo-Json $currentInstance.VisibleExternalCommands -Depth 100)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual($currentInstance.VisibleProviders, $this.VisibleProviders))
-        {
+        if (-not $this.ComplexObjectsEqual($currentInstance.VisibleProviders, $this.VisibleProviders)) {
             Write-Verbose "VisibleProviders not equal: $(ConvertTo-Json $currentInstance.VisibleProviders -Depth 100)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual((Convert-StringToArrayOfHashtable -literalString $currentInstance.AliasDefinitions), (Convert-StringToArrayOfHashtable -literalString $this.AliasDefinitions)))
-        {
+        if (-not $this.ComplexObjectsEqual((Convert-StringToArrayOfHashtable -literalString $currentInstance.AliasDefinitions), (Convert-StringToArrayOfHashtable -literalString $this.AliasDefinitions))) {
             Write-Verbose "AliasDefinitions not equal: $(ConvertTo-Json $currentInstance.AliasDefinitions -Depth 100)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual((Convert-StringToArrayOfHashtable -literalString $currentInstance.FunctionDefinitions), (Convert-StringToArrayOfHashtable -literalString $this.FunctionDefinitions)))
-        {
+        if (-not $this.ComplexObjectsEqual((Convert-StringToArrayOfHashtable -literalString $currentInstance.FunctionDefinitions), (Convert-StringToArrayOfHashtable -literalString $this.FunctionDefinitions))) {
             Write-Verbose "FunctionDefinitions not equal: $(ConvertTo-Json $currentInstance.FunctionDefinitions -Depth 100)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual((Convert-StringToArrayOfHashtable -literalString $currentInstance.VariableDefinitions), (Convert-StringToArrayOfHashtable -literalString $this.VariableDefinitions)))
-        {
+        if (-not $this.ComplexObjectsEqual((Convert-StringToArrayOfHashtable -literalString $currentInstance.VariableDefinitions), (Convert-StringToArrayOfHashtable -literalString $this.VariableDefinitions))) {
             Write-Verbose "VariableDefinitions not equal: $(ConvertTo-Json $currentInstance.VariableDefinitions -Depth 100)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual((Convert-StringToHashtable -hashtableAsString $currentInstance.EnvironmentVariables), (Convert-StringToHashtable -hashtableAsString $this.EnvironmentVariables)))
-        {
+        if (-not $this.ComplexObjectsEqual((Convert-StringToHashtable -hashtableAsString $currentInstance.EnvironmentVariables), (Convert-StringToHashtable -hashtableAsString $this.EnvironmentVariables))) {
             Write-Verbose "EnvironmentVariables not equal: $(ConvertTo-Json $currentInstance.EnvironmentVariables -Depth 100)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual($currentInstance.TypesToProcess, $this.TypesToProcess))
-        {
+        if (-not $this.ComplexObjectsEqual($currentInstance.TypesToProcess, $this.TypesToProcess)) {
             Write-Verbose "TypesToProcess not equal: $(ConvertTo-Json $currentInstance.TypesToProcess -Depth 100)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual($currentInstance.FormatsToProcess, $this.FormatsToProcess))
-        {
+        if (-not $this.ComplexObjectsEqual($currentInstance.FormatsToProcess, $this.FormatsToProcess)) {
             Write-Verbose "FormatsToProcess not equal: $(ConvertTo-Json $currentInstance.FormatsToProcess -Depth 100)"
             return $false
         }
 
-        if (-not $this.ComplexObjectsEqual($currentInstance.AssembliesToLoad, $this.AssembliesToLoad))
-        {
+        if (-not $this.ComplexObjectsEqual($currentInstance.AssembliesToLoad, $this.AssembliesToLoad)) {
             Write-Verbose "AssembliesToLoad not equal: $(ConvertTo-Json $currentInstance.AssembliesToLoad -Depth 100)"
             return $false
         }
@@ -489,19 +428,17 @@ class JeaSessionConfiguration
 
     ## A simple comparison for complex objects used in JEA configurations.
     ## We don't need anything extensive, as we should be the only ones changing them.
-    hidden [bool] ComplexObjectsEqual($object1, $object2)
-    {
-        $object1ordered=[System.Collections.Specialized.OrderedDictionary]@{}
-        $object1.Keys | Sort-Object -Descending | ForEach-Object {$object1ordered.Insert(0,$_,$object1["$_"])}
+    hidden [bool] ComplexObjectsEqual($object1, $object2) {
+        $object1ordered = [System.Collections.Specialized.OrderedDictionary]@{}
+        $object1.Keys | Sort-Object -Descending | ForEach-Object {$object1ordered.Insert(0, $_, $object1["$_"])}
 
-        $object2ordered=[System.Collections.Specialized.OrderedDictionary]@{}
-        $object2.Keys | Sort-Object -Descending | ForEach-Object {$object2ordered.Insert(0,$_,$object2["$_"])}
+        $object2ordered = [System.Collections.Specialized.OrderedDictionary]@{}
+        $object2.Keys | Sort-Object -Descending | ForEach-Object {$object2ordered.Insert(0, $_, $object2["$_"])}
 
         $json1 = ConvertTo-Json -InputObject $object1ordered -Depth 100
         $json2 = ConvertTo-Json -InputObject $object2ordered -Depth 100
 
-        if ($json1 -ne $json2)
-        {
+        if ($json1 -ne $json2) {
             Write-Verbose "object1: $json1"
             Write-Verbose "object2: $json2"
         }
@@ -510,22 +447,18 @@ class JeaSessionConfiguration
     }
 
     ## Get a PS Session Configuration based on its name
-    hidden [Object] GetPSSessionConfiguration($Name)
-    {
+    hidden [Object] GetPSSessionConfiguration($Name) {
         $winRMService = Get-Service -Name 'WinRM'
-        if ($winRMService -and $winRMService.Status -eq 'Running')
-        {
+        if ($winRMService -and $winRMService.Status -eq 'Running') {
             # Temporary disabling Verbose as xxx-PSSessionConfiguration methods verbose messages are useless for DSC debugging
             $VerbosePreferenceBackup = $Global:VerbosePreference
             $Global:VerbosePreference = 'SilentlyContinue'
             $PSSessionConfiguration = Get-PSSessionConfiguration -Name $Name -ErrorAction 'SilentlyContinue'
             $Global:VerbosePreference = $VerbosePreferenceBackup
-            if ($PSSessionConfiguration)
-            {
+            if ($PSSessionConfiguration) {
                 return $PSSessionConfiguration
             }
-            else
-            {
+            else {
                 return $null
             }
         }
@@ -536,11 +469,9 @@ class JeaSessionConfiguration
     }
 
     ## Unregister a PS Session Configuration based on its name
-    hidden [Void] UnregisterPSSessionConfiguration($Name)
-    {
+    hidden [Void] UnregisterPSSessionConfiguration($Name) {
         $winRMService = Get-Service -Name 'WinRM'
-        if ($winRMService -and $winRMService.Status -eq 'Running')
-        {
+        if ($winRMService -and $winRMService.Status -eq 'Running') {
             # Temporary disabling Verbose as xxx-PSSessionConfiguration methods verbose messages are useless for DSC debugging
             $VerbosePreferenceBackup = $Global:VerbosePreference
             $Global:VerbosePreference = 'SilentlyContinue'
@@ -553,11 +484,9 @@ class JeaSessionConfiguration
     }
 
     ## Register a PS Session Configuration and handle a WinRM hanging situation
-    hidden [Void] RegisterPSSessionConfiguration($Name, $Path, $Timeout)
-    {
+    hidden [Void] RegisterPSSessionConfiguration($Name, $Path, $Timeout) {
         $winRMService = Get-Service -Name 'WinRM'
-        if ($winRMService -and $winRMService.Status -eq 'Running')
-        {
+        if ($winRMService -and $winRMService.Status -eq 'Running') {
             Write-Verbose "Will register PSSessionConfiguration with argument: Name = '$Name', Path = '$Path' and Timeout = '$Timeout'"
             # Register-PSSessionConfiguration has been hanging because the WinRM service is stuck in Stopping state
             # therefore we need to run Register-PSSessionConfiguration within a job to allow us to handle a hanging WinRM service
@@ -565,31 +494,25 @@ class JeaSessionConfiguration
             # Save the list of services sharing the same process as WinRM in case we have to restart them
             $processId = Get-CimInstance -ClassName 'Win32_Service' -Filter "Name LIKE 'WinRM'" | Select-Object -Expand 'ProcessId'
             $serviceList = @(Get-CimInstance -ClassName 'Win32_Service' -Filter "ProcessId=$processId" | Select-Object -Expand 'Name')
-            foreach ($service in $serviceList.clone())
-            {
+            foreach ($service in $serviceList.clone()) {
                 $dependentServiceList = Get-Service -Name $service | ForEach-Object { $_.DependentServices }
-                foreach ($dependentService in $dependentServiceList)
-                {
-                    if ($dependentService.Status -eq 'Running' -and $serviceList -notcontains $dependentService.Name)
-                    {
+                foreach ($dependentService in $dependentServiceList) {
+                    if ($dependentService.Status -eq 'Running' -and $serviceList -notcontains $dependentService.Name) {
                         $serviceList += $dependentService.Name
                     }
                 }
             }
 
-            if ($Path)
-            {
+            if ($Path) {
                 $registerString = "`$null = Register-PSSessionConfiguration -Name '$Name' -Path '$Path' -Force -ErrorAction 'Stop' -WarningAction 'SilentlyContinue'"
             }
-            else
-            {
+            else {
                 $registerString = "`$null = Register-PSSessionConfiguration -Name '$Name' -Force -ErrorAction 'Stop' -WarningAction 'SilentlyContinue'"
             }
 
             $registerScriptBlock = [Scriptblock]::Create($registerString)
 
-            if ($Timeout -gt 0)
-            {
+            if ($Timeout -gt 0) {
                 $job = Start-Job -ScriptBlock $registerScriptBlock
                 Wait-Job -Job $job -Timeout $Timeout
                 Receive-Job -Job $job
@@ -597,65 +520,53 @@ class JeaSessionConfiguration
 
                 # If WinRM is still Stopping after the job has completed / exceeded $Timeout, force kill the underlying WinRM process
                 $winRMService = Get-Service -Name 'WinRM'
-                if ($winRMService -and $winRMService.Status -eq 'StopPending')
-                {
+                if ($winRMService -and $winRMService.Status -eq 'StopPending') {
                     $processId = Get-CimInstance -ClassName 'Win32_Service' -Filter "Name LIKE 'WinRM'" | Select-Object -Expand 'ProcessId'
                     Write-Verbose "WinRM seems hanging in Stopping state. Forcing process $processId to stop"
                     $failureList = @()
-                    try
-                    {
+                    try {
                         # Kill the process hosting WinRM service
                         Stop-Process -Id $processId -Force
                         Start-Sleep -Seconds 5
                         Write-Verbose "Restarting services: $($serviceList -join ', ')"
                         # Then restart all services previously identified
-                        foreach($service in $serviceList)
-                        {
-                            try
-                            {
+                        foreach ($service in $serviceList) {
+                            try {
                                 Start-Service -Name $service
                             }
-                            catch
-                            {
+                            catch {
                                 $failureList += "Start service $service"
                             }
                         }
                     }
-                    catch
-                    {
+                    catch {
                         $failureList += "Kill WinRM process"
                     }
 
-                    if ($failureList)
-                    {
+                    if ($failureList) {
                         Write-Verbose "Failed to execute following operation(s): $($failureList -join ', ')"
                     }
                 }
-                elseif ($winRMService -and $winRMService.Status -eq 'Stopped')
-                {
+                elseif ($winRMService -and $winRMService.Status -eq 'Stopped') {
                     Write-Verbose '(Re)starting WinRM service'
                     Start-Service -Name 'WinRM'
                 }
             }
-            else
-            {
+            else {
                 Invoke-Command -ScriptBlock $registerScriptBlock
             }
         }
-        else
-        {
+        else {
             Throw "WinRM service is not running. Cannot register PS Session Configuration '$Name'"
         }
     }
 
     # Gets the resource's current state.
-    [JeaSessionConfiguration] Get()
-    {
+    [JeaSessionConfiguration] Get() {
         $returnObject = New-Object JeaSessionConfiguration
         $sessionConfiguration = $this.GetPSSessionConfiguration($this.EndpointName)
 
-        if ((-not $sessionConfiguration) -or (-not $sessionConfiguration.ConfigFilePath))
-        {
+        if ((-not $sessionConfiguration) -or (-not $sessionConfiguration.ConfigFilePath)) {
             $returnObject.Ensure = [Ensure]::Absent
             return $returnObject
         }
@@ -669,103 +580,83 @@ class JeaSessionConfiguration
         ## Convert the hashtable to a string, as that is the input format required by DSC
         $returnObject.RoleDefinitions = $rawConfigFileArguments.KeyValuePairs | Where-Object { $_.Item1.Extent.Text -eq 'RoleDefinitions' } | ForEach-Object { $_.Item2.Extent.Text }
 
-        if ($sessionConfiguration.RunAsVirtualAccountGroups)
-        {
+        if ($sessionConfiguration.RunAsVirtualAccountGroups) {
             $returnObject.RunAsVirtualAccountGroups = $sessionConfiguration.RunAsVirtualAccountGroups -split ';'
         }
 
-        if ($sessionConfiguration.GroupManagedServiceAccount)
-        {
+        if ($sessionConfiguration.GroupManagedServiceAccount) {
             $returnObject.GroupManagedServiceAccount = $sessionConfiguration.GroupManagedServiceAccount
         }
 
-        if ($configFileArguments.TranscriptDirectory)
-        {
+        if ($configFileArguments.TranscriptDirectory) {
             $returnObject.TranscriptDirectory = $configFileArguments.TranscriptDirectory
         }
 
-        if ($configFileArguments.ScriptsToProcess)
-        {
+        if ($configFileArguments.ScriptsToProcess) {
             $returnObject.ScriptsToProcess = $configFileArguments.ScriptsToProcess
         }
 
-        if ($configFileArguments.MountUserDrive)
-        {
+        if ($configFileArguments.MountUserDrive) {
             $returnObject.MountUserDrive = $configFileArguments.MountUserDrive
         }
 
-        if ($configFileArguments.UserDriveMaximumSize)
-        {
+        if ($configFileArguments.UserDriveMaximumSize) {
             $returnObject.UserDriveMaximumSize = $configFileArguments.UserDriveMaximumSize
         }
 
-        if ($configFileArguments.RequiredGroups)
-        {
+        if ($configFileArguments.RequiredGroups) {
             $returnObject.RequiredGroups = $rawConfigFileArguments.KeyValuePairs | Where-Object { $_.Item1.Extent.Text -eq 'RequiredGroups' } | ForEach-Object { $_.Item2.Extent.Text }
         }
 
-        if ($configFileArguments.ModulesToImport)
-        {
+        if ($configFileArguments.ModulesToImport) {
             $returnObject.ModulesToImport = $rawConfigFileArguments.KeyValuePairs | Where-Object { $_.Item1.Extent.Text -eq 'ModulesToImport' } | ForEach-Object { $_.Item2.Extent.Text }
         }
 
-        if ($configFileArguments.VisibleAliases)
-        {
+        if ($configFileArguments.VisibleAliases) {
             $returnObject.VisibleAliases = $configFileArguments.VisibleAliases
         }
 
-        if ($configFileArguments.VisibleCmdlets)
-        {
+        if ($configFileArguments.VisibleCmdlets) {
             $returnObject.VisibleCmdlets = $rawConfigFileArguments.KeyValuePairs | Where-Object { $_.Item1.Extent.Text -eq 'VisibleCmdlets' } | ForEach-Object { $_.Item2.Extent.Text }
         }
 
-        if ($configFileArguments.VisibleFunctions)
-        {
+        if ($configFileArguments.VisibleFunctions) {
             $returnObject.VisibleFunctions = $rawConfigFileArguments.KeyValuePairs | Where-Object { $_.Item1.Extent.Text -eq 'VisibleFunctions' } | ForEach-Object { $_.Item2.Extent.Text }
         }
 
-        if ($configFileArguments.VisibleExternalCommands)
-        {
+        if ($configFileArguments.VisibleExternalCommands) {
             $returnObject.VisibleExternalCommands = $configFileArguments.VisibleExternalCommands
         }
 
-        if ($configFileArguments.VisibleProviders)
-        {
+        if ($configFileArguments.VisibleProviders) {
             $returnObject.VisibleProviders = $configFileArguments.VisibleProviders
         }
 
-        if ($configFileArguments.AliasDefinitions)
-        {
+        if ($configFileArguments.AliasDefinitions) {
             $returnObject.AliasDefinitions = $rawConfigFileArguments.KeyValuePairs | Where-Object { $_.Item1.Extent.Text -eq 'AliasDefinitions' } | ForEach-Object { $_.Item2.Extent.Text }
         }
 
-        if ($configFileArguments.FunctionDefinitions)
-        {
+        if ($configFileArguments.FunctionDefinitions) {
             $returnObject.FunctionDefinitions = $rawConfigFileArguments.KeyValuePairs | Where-Object { $_.Item1.Extent.Text -eq 'FunctionDefinitions' } | ForEach-Object { $_.Item2.Extent.Text }
         }
 
-        if ($configFileArguments.VariableDefinitions)
-        {
+        if ($configFileArguments.VariableDefinitions) {
             $returnObject.VariableDefinitions = $rawConfigFileArguments.KeyValuePairs | Where-Object { $_.Item1.Extent.Text -eq 'VariableDefinitions' } | ForEach-Object { $_.Item2.Extent.Text }
         }
 
-        if ($configFileArguments.EnvironmentVariables)
-        {
+        if ($configFileArguments.EnvironmentVariables) {
             $returnObject.EnvironmentVariables = $rawConfigFileArguments.KeyValuePairs | Where-Object { $_.Item1.Extent.Text -eq 'EnvironmentVariables' } | ForEach-Object { $_.Item2.Extent.Text }
         }
 
-        if ($configFileArguments.TypesToProcess)
-        {
+        if ($configFileArguments.TypesToProcess) {
             $returnObject.TypesToProcess = $configFileArguments.TypesToProcess
         }
 
-        if ($configFileArguments.FormatsToProcess)
-        {
+        if ($configFileArguments.FormatsToProcess) {
             $returnObject.FormatsToProcess = $configFileArguments.FormatsToProcess
         }
 
-        if ($configFileArguments.AssembliesToLoad)
-        {
+        if ($configFileArguments.AssembliesToLoad) {
             $returnObject.AssembliesToLoad = $configFileArguments.AssembliesToLoad
         }
 
