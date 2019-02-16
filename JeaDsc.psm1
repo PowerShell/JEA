@@ -108,77 +108,58 @@ Function Convert-StringToArrayOfObject($literalString)
 
 Function Convert-ObjectToHashtable($object) {
     $Parameters = @{}
-    foreach ($Parameter in $object.PSObject.Properties.Where({$_.Value})) {
-        $Parameters.Add($Parameter.Name,$Parameter.Value)
+    foreach ($Parameter in $object.PSObject.Properties.Where( {$_.Value})) {
+        $Parameters.Add($Parameter.Name, $Parameter.Value)
     }
 
     return $Parameters
 }
 
 
-function Compare-Hashtable($ActualValue, $ExpectedValue) {
-    # Based on FindMisMatchedHashtableValue by Stuart Leeks
-    # https://github.com/stuartleeks/PesterMatchHashtable
-    foreach($expectedKey in $ExpectedValue.Keys) {
-        if (-not($ActualValue.Keys -contains $expectedKey)){
-            return "Expected key: {$expectedKey}, but missing in actual"
-        }
-        $expectedItem = $ExpectedValue[$expectedKey]
-        $actualItem = $ActualValue[$expectedKey]
-        if ($expectedItem -Is [Array] -or $actualItem -Is [Array]) {
-            if ($result = Compare-ArrayValues -ActualValue $actualItem -ExpectedValue $expectedItem) {
-                return $result
-            }
-        }
-        elseif (-not ($actualItem -eq $expectedItem)) {
-            return "Value differs for key {$expectedKey}. Expected value: {$expectedItem}, actual value: {$actualItem}"
-        }
-    }
-
-    foreach($actualKey in $ActualValue.Keys) {
-        if (-not($ExpectedValue.Keys -contains $actualKey)){
-            return "Actual key: {$actualKey}, but missing in expected"
-        }
-        $expectedItem = $ExpectedValue[$actualKey]
-        $actualItem = $ActualValue[$actualKey]
-        if ($expectedItem -Is [Array] -or $actualItem -Is [Array]) {
-            if ($result = Compare-ArrayValues -ActualValue $actualItem -ExpectedValue $expectedItem) {
-                return $result
-            }
-        }
-        elseif (-not ($actualItem -eq $expectedItem)) {
-            return "Value differs for key {$actualKey}. Expected value: {$expectedItem}, actual value: {$actualItem}"
-        }
-    }
-}
-
-function Compare-ArrayValues {
+Function Compare-JeaConfiguration {
+    [cmdletbinding()]
     param (
-        $ActualValue,
-        $ExpectedValue
+        [parameter(Mandatory)]
+        [hashtable]$ReferenceObject,
+
+        [parameter(Mandatory)]
+        [hashtable]$DifferenceObject
     )
 
-    $ActualValue = @($ActualValue)
-    $ExpectedGroups = $ExpectedValue | Group-Object | Sort-Object -Property Name
-    $ActualGroups = $ActualValue | Group-Object | Sort-Object -Property Name
-    for ($i = 0; $i -lt $ExpectedGroups.Length; $i++) {
-        if ( ($i -ge $ActualGroups.Length) `
-                -or (-not($ActualGroups[$i].Name -eq $ExpectedGroups[$i].Name))) {
-            return "Expected: {$ExpectedValue}. Actual: {$ActualValue}. Actual is missing item: $($ExpectedGroups[$i].Name)"
-        }
-        if (-not($ActualGroups[$i].Count -eq $ExpectedGroups[$i].Count)) {
-            return "Expected: {$ExpectedValue}. Actual: {$ActualValue}. Actual has $($ActualGroups[$i].Count) of item '$($ExpectedGroups[$i].Name)', expected $($ExpectedGroups[$i].Count)"
+    $ReferenceObjectordered = [System.Collections.Specialized.OrderedDictionary]@{}
+    $ReferenceObject.Keys |
+        Sort-Object -Descending |
+        ForEach-Object {
+        $ReferenceObjectordered.Insert(0, $_, $ReferenceObject["$_"])
+    }
+
+    $DifferenceObjectordered = [System.Collections.Specialized.OrderedDictionary]@{}
+    $DifferenceObject.Keys |
+        Sort-Object -Descending |
+        ForEach-Object {
+        $DifferenceObjectordered.Insert(0, $_, $DifferenceObject["$_"])
+    }
+
+    if ($ReferenceObjectordered.FunctionDefinitions) {
+        foreach ($FunctionDefinition in $ReferenceObjectordered.FunctionDefinitions) {
+            $FunctionDefinition.ScriptBlock = $FunctionDefinition.ScriptBlock.Ast.ToString().Replace(' ', '')
         }
     }
-    for ($i = 0; $i -lt $ActualGroups.Length; $i++) {
-        # check for items in actual not in expected
-        if ( ($i -ge $ExpectedGroups.Length) `
-                -or (-not($ExpectedGroups[$i].Name -eq $ActualGroups[$i].Name))) {
-            return "Expected: {$ExpectedValue}. Actual: {$ActualValue}. Expected doesn't have item: $($ActualGroups[$i].Name)"
+
+    if ($DifferenceObjectordered.FunctionDefinitions) {
+        foreach ($FunctionDefinition in $DifferenceObjectordered.FunctionDefinitions) {
+            $FunctionDefinition.ScriptBlock = $FunctionDefinition.ScriptBlock.Ast.ToString().Replace(' ', '')
         }
     }
-    if ($ActualValue.Length -ne $ExpectedValue.Length) {
-        return "Lengths differ. Expected length $($ExpectedValue.Length). Actual length $($ActualValue.Length) ";
+
+    $ReferenceJson = ConvertTo-Json -InputObject $ReferenceObjectordered -Depth 100
+    $DifferenceJson = ConvertTo-Json -InputObject $DifferenceObjectordered -Depth 100
+
+    if ($ReferenceJson -ne $DifferenceJson) {
+        Write-Verbose "Existing Configuration: $ReferenceJson"
+        Write-Verbose "New COnfiguration: $DifferenceJson"
+
+        return $false
     }
-    return $null;
+
 }

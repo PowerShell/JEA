@@ -1,6 +1,5 @@
 using namespace System.Management.Automation.Language
-enum Ensure
-{
+enum Ensure {
     Present
     Absent
 }
@@ -121,7 +120,7 @@ class JeaRoleCapabilities {
         if (Test-Path -Path $this.Path) {
             $CurrentStateFile = Import-PowerShellDataFile -Path $this.Path
 
-            'Copyright','GUID','Author','CompanyName' | Foreach-Object {
+            'Copyright', 'GUID', 'Author', 'CompanyName' | Foreach-Object {
                 $CurrentStateFile.Remove($_)
             }
 
@@ -142,7 +141,7 @@ class JeaRoleCapabilities {
             $Parameters = Convert-ObjectToHashtable($this)
             $Parameters.Remove('Ensure')
 
-            Foreach ($Parameter in $Parameters.Keys.Where({$Parameters[$_] -match '@{'})) {
+            Foreach ($Parameter in $Parameters.Keys.Where( {$Parameters[$_] -match '@{'})) {
                 $Parameters[$Parameter] = Convert-StringToObject -InputString $Parameters[$Parameter]
             }
 
@@ -175,9 +174,9 @@ class JeaRoleCapabilities {
             $CurrentState = Convert-ObjectToHashtable -Object $this.Get()
 
             $Parameters = Convert-ObjectToHashtable -Object $this
-            $Compare = Compare-Hashtable -ActualValue $CurrentState -ExpectedValue $Parameters
+            $Compare = Compare-JeaConfiguration -ReferenceObject $CurrentState -DifferenceObject $Parameters
 
-            if ($null-eq $Compare) {
+            if ($null -eq $Compare) {
                 return $true
             }
             else {
@@ -193,7 +192,7 @@ class JeaRoleCapabilities {
 
         return $false
     }
- }
+}
 
 function Convert-StringToObject {
     [cmdletbinding()]
@@ -203,20 +202,20 @@ function Convert-StringToObject {
 
     $ParseErrors = @()
     $FakeCommand = "Totally-NotACmdlet -FakeParameter $InputString"
-    $AST = [Parser]::ParseInput($FakeCommand,[ref]$null,[ref]$ParseErrors)
-    if(-not $ParseErrors){
+    $AST = [Parser]::ParseInput($FakeCommand, [ref]$null, [ref]$ParseErrors)
+    if (-not $ParseErrors) {
         # Use Ast.Find() to locate the CommandAst parsed from our fake command
-        $CmdAst = $AST.Find({param($ChildAst) $ChildAst -is [CommandAst]},$false)
+        $CmdAst = $AST.Find( {param($ChildAst) $ChildAst -is [CommandAst]}, $false)
         # Grab the user-supplied arguments (index 0 is the command name, 1 is our fake parameter)
-        $AllArgumentAst = $CmdAst.CommandElements.Where({$_ -isnot [CommandParameterAst] -and $_.Value -ne 'Totally-NotACmdlet'})
+        $AllArgumentAst = $CmdAst.CommandElements.Where( {$_ -isnot [CommandParameterAst] -and $_.Value -ne 'Totally-NotACmdlet'})
         foreach ($ArgumentAst in $AllArgumentAst) {
-            if($ArgumentAst -is [ArrayLiteralAst]) {
+            if ($ArgumentAst -is [ArrayLiteralAst]) {
                 # Argument was a list
-                foreach ($Element in $ArgumentAst.Elements){
-                    if ($Element.StaticType.Name -eq 'String'){
+                foreach ($Element in $ArgumentAst.Elements) {
+                    if ($Element.StaticType.Name -eq 'String') {
                         $Element.value
                     }
-                    if ($Element.StaticType.Name -eq 'Hashtable'){
+                    if ($Element.StaticType.Name -eq 'Hashtable') {
                         [Hashtable]$Element.SafeGetValue()
                     }
                 }
@@ -224,8 +223,7 @@ function Convert-StringToObject {
             else {
                 if ($ArgumentAst -is [HashtableAst]) {
                     $ht = [Hashtable]$ArgumentAst.SafeGetValue()
-                    for ($i = 1; $i -lt $ht.Keys.Count; $i++)
-                    {
+                    for ($i = 1; $i -lt $ht.Keys.Count; $i++) {
                         $value = $ht[([array]$ht.Keys)[$i]]
                         if ($value -is [scriptblock]) {
 
