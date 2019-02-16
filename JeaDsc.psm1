@@ -140,6 +140,18 @@ Function Compare-JeaConfiguration {
         $DifferenceObjectordered.Insert(0, $_, $DifferenceObject["$_"])
     }
 
+    if ($ReferenceObjectordered.FunctionDefinitions) {
+        foreach ($FunctionDefinition in $ReferenceObjectordered.FunctionDefinitions) {
+            $FunctionDefinition.ScriptBlock = $FunctionDefinition.ScriptBlock.Ast.ToString().Replace(' ', '')
+        }
+    }
+
+    if ($DifferenceObjectordered.FunctionDefinitions) {
+        foreach ($FunctionDefinition in $DifferenceObjectordered.FunctionDefinitions) {
+            $FunctionDefinition.ScriptBlock = $FunctionDefinition.ScriptBlock.Ast.ToString().Replace(' ', '')
+        }
+    }
+
     $ReferenceJson = ConvertTo-Json -InputObject $ReferenceObjectordered -Depth 100
     $DifferenceJson = ConvertTo-Json -InputObject $DifferenceObjectordered -Depth 100
 
