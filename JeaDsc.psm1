@@ -1,8 +1,6 @@
 ## Convert a string representing a Hashtable into a Hashtable
-Function Convert-StringToHashtable($hashtableAsString)
-{
-    if ($hashtableAsString -eq $null)
-    {
+Function Convert-StringToHashtable($hashtableAsString) {
+    if ($hashtableAsString -eq $null) {
         $hashtableAsString = '@{}'
     }
     $ast = [System.Management.Automation.Language.Parser]::ParseInput($hashtableAsString, [ref] $null, [ref] $null)
@@ -12,12 +10,10 @@ Function Convert-StringToHashtable($hashtableAsString)
 }
 
 ## Convert a string representing an array of Hashtables
-Function Convert-StringToArrayOfHashtable($literalString)
-{
+Function Convert-StringToArrayOfHashtable($literalString) {
     $items = @()
 
-    if ($literalString -eq $null)
-    {
+    if ($literalString -eq $null) {
         return $items
     }
 
@@ -25,10 +21,9 @@ Function Convert-StringToArrayOfHashtable($literalString)
     $predicate = {
         param($ast)
 
-        if ($ast -is [System.Management.Automation.Language.HashtableAst])
-        {
+        if ($ast -is [System.Management.Automation.Language.HashtableAst]) {
             return ($ast.Parent -is [System.Management.Automation.Language.ArrayLiteralAst]) -or `
-                   ($ast.Parent -is [System.Management.Automation.Language.CommandExpressionAst])
+            ($ast.Parent -is [System.Management.Automation.Language.CommandExpressionAst])
         }
 
         return $false
@@ -37,8 +32,7 @@ Function Convert-StringToArrayOfHashtable($literalString)
     $rootAst = [System.Management.Automation.Language.Parser]::ParseInput($literalString, [ref] $null, [ref] $null)
     $data = $rootAst.FindAll($predicate, $false)
 
-    foreach ($datum in $data)
-    {
+    foreach ($datum in $data) {
         $items += $datum.SafeGetValue()
     }
 
@@ -46,12 +40,10 @@ Function Convert-StringToArrayOfHashtable($literalString)
 }
 
 ## Convert a string representing an array of strings or Hashtables into an array of objects
-Function Convert-StringToArrayOfObject($literalString)
-{
+Function Convert-StringToArrayOfObject($literalString) {
     $items = @()
 
-    if ($literalString -eq $null)
-    {
+    if ($literalString -eq $null) {
         return $items
     }
 
@@ -62,31 +54,26 @@ Function Convert-StringToArrayOfObject($literalString)
     $predicate = {
         param($ast)
 
-        if ($ast -is [System.Management.Automation.Language.HashtableAst])
-        {
+        if ($ast -is [System.Management.Automation.Language.HashtableAst]) {
             # single hashtable or array item as hashtable
             return ($ast.Parent -is [System.Management.Automation.Language.ArrayLiteralAst]) -or `
-                   ($ast.Parent -is [System.Management.Automation.Language.CommandExpressionAst])
+            ($ast.Parent -is [System.Management.Automation.Language.CommandExpressionAst])
         }
-        elseif ($ast -is [System.Management.Automation.Language.StringConstantExpressionAst])
-        {
+        elseif ($ast -is [System.Management.Automation.Language.StringConstantExpressionAst]) {
             # array item as string
-            if ($ast.Parent -is [System.Management.Automation.Language.ArrayLiteralAst])
-            {
+            if ($ast.Parent -is [System.Management.Automation.Language.ArrayLiteralAst]) {
                 return $true
             }
 
-            do
-            {
-                if ($ast.Parent -is [System.Management.Automation.Language.HashtableAst])
-                {
+            do {
+                if ($ast.Parent -is [System.Management.Automation.Language.HashtableAst]) {
                     # string nested within a hashtable
                     return $false
                 }
 
                 $ast = $ast.Parent
             }
-            while( $ast -ne $null )
+            while ( $ast -ne $null )
 
             # single string
             return $true
@@ -98,8 +85,7 @@ Function Convert-StringToArrayOfObject($literalString)
     $rootAst = [System.Management.Automation.Language.Parser]::ParseInput($literalString, [ref] $null, [ref] $null)
     $data = $rootAst.FindAll($predicate, $false)
 
-    foreach ($datum in $data)
-    {
+    foreach ($datum in $data) {
         $items += $datum.SafeGetValue()
     }
 
