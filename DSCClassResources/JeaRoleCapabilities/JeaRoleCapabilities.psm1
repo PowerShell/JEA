@@ -145,16 +145,21 @@ class JeaRoleCapabilities {
                 $Parameters[$Parameter] = Convert-StringToObject -InputString $Parameters[$Parameter]
             }
 
+            $InvalidConfiguration = $false
+
             if ($Parameters.ContainsKey('FunctionDefinitions')) {
                 foreach ($FunctionDefName in $Parameters['FunctionDefinitions'].Name) {
                     if ($FunctionDefName -notin $Parameters['VisibleFunctions']) {
                         Write-Error -Message "Function defined but not visible to Role Configuration: $FunctionDefName"
+                        $InvalidConfiguration = $true
                     }
                 }
             }
-            $null = New-Item -Path $this.Path -ItemType File -Force
+            if (-not $InvalidConfiguration) {
+                $null = New-Item -Path $this.Path -ItemType File -Force
 
-            New-PSRoleCapabilityFile @Parameters
+                New-PSRoleCapabilityFile @Parameters
+            }
         }
         elseif ($this.Ensure -eq [Ensure]::Absent -and (Test-Path -Path $this.Path)) {
             Remove-Item -Path $this.Path -Confirm:$False
