@@ -41,6 +41,10 @@ class JeaEndpoint
     [DscProperty()]
     [string[]] $ScriptsToProcess
 
+    ## The optional session type for the endpoint
+    [DscProperty()]
+    [string] $SessionType
+
     ## The optional switch to enable mounting of a restricted user drive
     [Dscproperty()]
     [bool] $MountUserDrive
@@ -161,6 +165,12 @@ class JeaEndpoint
             if($this.TranscriptDirectory)
             {
                 $configurationFileArguments["TranscriptDirectory"] = $this.TranscriptDirectory
+            }
+
+            ## SessionType
+            if($this.SessionType)
+            {
+                $configurationFileArguments["SessionType"] = $this.SessionType
             }
 
             ## Startup scripts
@@ -379,6 +389,12 @@ class JeaEndpoint
         if($currentInstance.TranscriptDirectory -ne $this.TranscriptDirectory)
         {
             Write-Verbose "TranscriptDirectory not equal: $($currentInstance.TranscriptDirectory)"
+            return $false
+        }
+
+        if($currentInstance.SessionType -ne $this.SessionType)
+        {
+            Write-Verbose "SessionType not equal: $($currentInstance.SessionType)"
             return $false
         }
 
@@ -652,6 +668,11 @@ class JeaEndpoint
         if($configFileArguments.TranscriptDirectory)
         {
             $returnObject.TranscriptDirectory = $configFileArguments.TranscriptDirectory
+        }
+
+        if($configFileArguments.SessionType)
+        {
+            $returnObject.SessionType = $configFileArguments.SessionType
         }
 
         if($configFileArguments.ScriptsToProcess)
